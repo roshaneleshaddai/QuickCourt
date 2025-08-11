@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { facilitiesAPI } from '@/lib/api'
 import Header from '@/components/Header'
 import GoogleMap from '@/components/GoogleMap'
+import ReviewDisplay from '@/components/ReviewDisplay'
 
 
 export default function FacilityDetailPage() {
@@ -321,38 +322,7 @@ export default function FacilityDetailPage() {
 
             {/* Player Reviews & Ratings Section */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Player Reviews & Ratings</h3>
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5, 6].map((review, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">Mitchell Admin</h4>
-                          <div className="flex items-center space-x-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star key={star} className="h-4 w-4 text-yellow-400 fill-current" />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-gray-700 mb-2">Nice turf, well maintained</p>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>10 June 2025, 5:30 PM</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div className="text-center">
-                  <button className="text-blue-600 hover:text-blue-700 font-medium">
-                    Load more reviews
-                  </button>
-                </div>
-              </div>
+              <ReviewDisplay facilityId={facility._id} />
             </div>
           </div>
 

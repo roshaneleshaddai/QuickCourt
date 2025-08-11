@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Calendar, Clock, MapPin, Star, Filter, Search, Plus, User, CreditCard, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { userAPI } from '@/lib/api'
+import { userAPI, reviewsAPI } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
+import ReviewModal from '@/components/ReviewModal'
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
@@ -16,6 +17,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('bookings')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [reviewModal, setReviewModal] = useState({
+    isOpen: false,
+    booking: null,
+    facility: null,
+    existingReview: null
+  })
+  const [userReviews, setUserReviews] = useState({})
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -70,6 +78,83 @@ export default function DashboardPage() {
   )
 
   const completedBookings = bookings.filter(booking => booking.status === 'completed')
+
+  // Handle review modal
+  const openReviewModal = async (booking) => {
+    try {
+      console.log('Opening review modal for booking:', booking)
+      
+      // Ensure we have facility information
+      const facility = booking.facility
+      if (!facility || (!facility._id && !facility.id)) {
+        toast.error('Facility information is missing')
+        return
+      }
+      
+      const facilityId = facility._id || facility.id || facility
+      console.log('Facility ID:', facilityId)
+      
+      let existingReview = userReviews[facilityId]
+      
+      if (!existingReview) {
+        // Try to fetch existing review from API
+        try {
+          console.log('Checking for existing review...')
+          const response = await reviewsAPI.getFacilityReviews(facilityId, { 
+            limit: 100 // Get all reviews to find user's review
+          })
+          console.log('Existing reviews response:', response)
+          
+          const userReview = response.reviews?.find(review => 
+            (review.user._id === user._id || review.user === user._id) ||
+            (review.user.id === user._id || review.user === user.id)
+          )
+          
+          if (userReview) {
+            console.log('Found existing user review:', userReview)
+            existingReview = userReview
+            setUserReviews(prev => ({ ...prev, [facilityId]: userReview }))
+          }
+        } catch (error) {
+          console.error('Error checking existing review:', error)
+          // Don't block the modal from opening due to this error
+        }
+      }
+
+      setReviewModal({
+        isOpen: true,
+        booking,
+        facility: facility,
+        existingReview
+      })
+    } catch (error) {
+      console.error('Error opening review modal:', error)
+      toast.error('Failed to open review form')
+    }
+  }
+
+  const closeReviewModal = () => {
+    setReviewModal({
+      isOpen: false,
+      booking: null,
+      facility: null,
+      existingReview: null
+    })
+  }
+
+  const handleReviewSubmitted = (review) => {
+    console.log('Review submitted successfully:', review)
+    
+    // Update the user reviews cache
+    const facilityId = review.facility || review.facility?._id
+    if (facilityId && review) {
+      setUserReviews(prev => ({ ...prev, [facilityId]: review }))
+      console.log('Updated user reviews cache for facility:', facilityId)
+    }
+    
+    // Close the modal
+    closeReviewModal()
+  }
 
   // Show loading spinner while checking authentication
   if (authLoading) {
@@ -309,8 +394,11 @@ export default function DashboardPage() {
                       {booking.status === 'completed' && (
                         <>
                           <span className="text-gray-300">|</span>
-                          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                            Rate Facility
+                          <button 
+                            onClick={() => openReviewModal(booking)}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            {userReviews[booking.facility?._id || booking.facility?.id || booking.facility] ? 'Edit Review' : 'Rate Facility'}
                           </button>
                         </>
                       )}
@@ -322,6 +410,16 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={reviewModal.isOpen}
+        onClose={closeReviewModal}
+        facility={reviewModal.facility}
+        booking={reviewModal.booking}
+        existingReview={reviewModal.existingReview}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   )
 }
