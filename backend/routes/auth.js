@@ -2,6 +2,9 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
+const OTP = require("../models/OTP");
+const { sendOTPEmail } = require("../utils/emailSender");
+const otpGenerator = require('otp-generator');
 
 const router = express.Router();
 
@@ -11,6 +14,88 @@ const generateToken = (userId) => {
     expiresIn: "7d",
   });
 };
+
+// @route   POST /api/auth/check-email
+router.post('/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    res.status(200).json({ exists: !!user });
+  } catch (error) {
+    console.error('Email check error:', error);
+    res.status(500).json({ error: 'Error checking email' });
+  }
+});
+
+// @route   POST /api/auth/send-otp
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Generate OTP
+    const otp = otpGenerator.generate(6, {
+      digits: true,
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false
+    });
+
+    // Save OTP to database
+    const otpDocument = new OTP({ email, otp });
+    await otpDocument.save();
+
+    // Send OTP via email
+    await sendOTPEmail(email, otp);
+
+    res.status(200).json({ 
+      success: true,
+      message: 'OTP sent successfully'
+    });
+  } catch (error) {
+    console.error('OTP sending error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to send OTP' 
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-otp
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Find the most recent OTP for the email
+    const otpRecord = await OTP.findOne({ email })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP not found or expired'
+      });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid OTP'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully'
+    });
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify OTP'
+    });
+  }
+});
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -35,8 +120,16 @@ router.post(
       .withMessage("Password must be at least 6 characters long"),
     body("phoneNumber")
       .optional()
-      .isMobilePhone()
-      .withMessage("Please provide a valid phone number"),
+      .custom((value) => {
+        if (value && value.trim() !== '') {
+          // Only validate if phone number is provided
+          const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+          if (!phoneRegex.test(value)) {
+            throw new Error('Please provide a valid phone number');
+          }
+        }
+        return true;
+      }),
     body("role")
       .optional()
       .isIn(["user", "facility_owner"])
@@ -200,7 +293,7 @@ router.post(
 );
 
 // @route   POST /api/auth/forgot-password
-// @desc    Send password reset email
+// @desc    Send password reset OTP
 // @access  Public
 router.post(
   "/forgot-password",
@@ -227,23 +320,94 @@ router.post(
         });
       }
 
-      // Generate reset token (in a real app, you'd send this via email)
-      const resetToken = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET || "your-secret-key",
-        {
-          expiresIn: "1h",
-        }
-      );
+      // Generate OTP for password reset
+      const otp = otpGenerator.generate(6, {
+        digits: true,
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false
+      });
 
-      // TODO: Send email with reset token
-      console.log("Password reset token:", resetToken);
+      // Save OTP to database
+      const otpDocument = new OTP({ email, otp });
+      await otpDocument.save();
+
+      // Send OTP via email
+      await sendOTPEmail(email, otp);
 
       res.json({
         message: "If an account exists, a password reset email has been sent",
       });
     } catch (error) {
       console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Server error during password reset" });
+    }
+  }
+);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset user password after OTP verification
+// @access  Public
+router.post(
+  "/reset-password",
+  [
+    body("email")
+      .isEmail()
+      .normalizeEmail()
+      .withMessage("Please provide a valid email"),
+    body("otp")
+      .isLength({ min: 6, max: 6 })
+      .withMessage("OTP must be 6 digits"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { email, otp, password } = req.body;
+
+      // Verify OTP first
+      const otpRecord = await OTP.findOne({ email })
+        .sort({ createdAt: -1 })
+        .exec();
+
+      if (!otpRecord) {
+        return res.status(400).json({
+          error: "OTP not found or expired"
+        });
+      }
+
+      if (otpRecord.otp !== otp) {
+        return res.status(400).json({
+          error: "Invalid OTP"
+        });
+      }
+
+      // Find user
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({
+          error: "User not found"
+        });
+      }
+
+      // Update password
+      user.password = password;
+      await user.save();
+
+      // Delete the used OTP
+      await OTP.findByIdAndDelete(otpRecord._id);
+
+      res.json({
+        message: "Password reset successfully"
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
       res.status(500).json({ error: "Server error during password reset" });
     }
   }

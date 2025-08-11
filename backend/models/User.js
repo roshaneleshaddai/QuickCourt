@@ -29,7 +29,13 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       trim: true,
-      match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
+      validate: {
+        validator: function(v) {
+          if (!v || v.trim() === '') return true; // Allow empty strings
+          return /^[\+]?[1-9][\d]{0,15}$/.test(v);
+        },
+        message: 'Please enter a valid phone number'
+      }
     },
     password: {
       type: String,
@@ -50,6 +56,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+      },
     emailVerified: {
       type: Boolean,
       default: false,
