@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
+import Header from '@/components/Header'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -75,9 +76,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <Header />
+      <div className="flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="text-center">
           <h1 className="text-3xl font-bold text-green-600 mb-2">QuickCourt</h1>
           <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -308,6 +311,7 @@ export default function RegisterPage() {
                 <span>Facebook</span>
               </button>
             </div>
+          </div>
           </div>
         </div>
       </div>
