@@ -19,9 +19,18 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
     if (!mounted) return
 
     // Check if API key is available
-    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 
-        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here' ||
-        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === '') {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    console.log('Google Maps API Key check:', {
+      hasKey: !!apiKey,
+      keyLength: apiKey?.length,
+      keyValue: apiKey ? `${apiKey.substring(0, 10)}...` : 'none'
+    })
+    
+    if (!apiKey || 
+        apiKey === 'your_google_maps_api_key_here' ||
+        apiKey === '' ||
+        apiKey === 'undefined') {
+      console.log('Google Maps API key not configured, showing fallback')
       setError('Google Maps API key not configured')
       setLoading(false)
       return
@@ -36,7 +45,7 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
         }
 
         const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
         script.async = true
         script.defer = true
         
@@ -153,9 +162,19 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
       initializeMap()
     }, 100)
 
+    // Add a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Google Maps loading timeout, showing fallback')
+        setError('Google Maps loading timeout')
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
     // Cleanup function
     return () => {
       clearTimeout(timer)
+      clearTimeout(loadingTimeout)
       if (marker) {
         if (window.google && window.google.maps) {
           window.google.maps.event.clearInstanceListeners(marker)
@@ -210,6 +229,11 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
               </p>
             )}
           </div>
+          {error === 'Google Maps API key not configured' && (
+            <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-600">
+              <p>💡 To enable interactive maps, configure your Google Maps API key</p>
+            </div>
+          )}
         </div>
       </div>
     )

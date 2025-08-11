@@ -66,7 +66,12 @@ export default function RegisterPage() {
       })
       
       if (result.success) {
-        router.push('/dashboard')
+        // Redirect based on user role
+        if (formData.role === 'facility_owner') {
+          router.push('/facilityowner')
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (error) {
       console.error('Registration error:', error)

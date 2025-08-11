@@ -213,5 +213,99 @@ export const bookingsAPI = {
     apiCall(`/bookings/facility/${facilityId}/availability?date=${date}`),
 };
 
+// Facility Owner API calls
+export const facilityOwnerAPI = {
+  // Get all facilities owned by the current user
+  getMyFacilities: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/facilities/my-facilities?${queryString}`);
+  },
+
+  // Get dashboard statistics for facility owner
+  getDashboardStats: () => apiCall("/facility-owner/dashboard/stats"),
+
+  // Get all bookings for owner's facilities
+  getMyFacilityBookings: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/facility-owner/bookings?${queryString}`);
+  },
+
+  // Update booking status
+  updateBookingStatus: (bookingId, status, notes = "") =>
+    apiCall(`/facility-owner/bookings/${bookingId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status, notes }),
+    }),
+
+  // Get facility availability and blocked slots
+  getFacilityAvailability: (facilityId, date) =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/availability?date=${date}`
+    ),
+
+  // Block/unblock time slots
+  blockTimeSlot: (facilityId, courtId, date, startTime, endTime, reason = "") =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/courts/${courtId}/block`,
+      {
+        method: "POST",
+        body: JSON.stringify({ date, startTime, endTime, reason }),
+      }
+    ),
+
+  // Unblock time slot
+  unblockTimeSlot: (facilityId, courtId, blockId) =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/courts/${courtId}/unblock/${blockId}`,
+      {
+        method: "DELETE",
+      }
+    ),
+
+  // Get facility earnings and reports
+  getFacilityEarnings: (facilityId, startDate, endDate) => {
+    const params = new URLSearchParams({ startDate, endDate }).toString();
+    return apiCall(
+      `/facility-owner/facilities/${facilityId}/earnings?${params}`
+    );
+  },
+
+  // Update facility operating hours
+  updateOperatingHours: (facilityId, operatingHours) =>
+    apiCall(`/facility-owner/facilities/${facilityId}/operating-hours`, {
+      method: "PUT",
+      body: JSON.stringify({ operatingHours }),
+    }),
+
+  // Add new court to facility
+  addCourt: (facilityId, sportId, courtData) =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/sports/${sportId}/courts`,
+      {
+        method: "POST",
+        body: JSON.stringify(courtData),
+      }
+    ),
+
+  // Update court details
+  updateCourt: (facilityId, sportId, courtId, courtData) =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/sports/${sportId}/courts/${courtId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(courtData),
+      }
+    ),
+
+  // Delete court
+  deleteCourt: (facilityId, sportId, courtId) =>
+    apiCall(
+      `/facility-owner/facilities/${facilityId}/sports/${sportId}/courts/${courtId}`,
+      {
+        method: "DELETE",
+      }
+    ),
+};
+
 // Health check
 export const healthCheck = () => apiCall("/health");

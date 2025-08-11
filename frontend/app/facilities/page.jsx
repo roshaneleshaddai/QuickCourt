@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, MapPin, Star, Filter, X, Menu } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { facilitiesAPI } from '@/lib/api'
+import { facilitiesAPI, sportsAPI } from '@/lib/api'
 import Header from '@/components/Header'
 
 export default function FacilitiesPage() {
@@ -29,10 +29,9 @@ export default function FacilitiesPage() {
   useEffect(() => {
     const fetchSports = async () => {
       try {
-        const response = await fetch('/api/sports')
-        const data = await response.json()
-        if (data.sports) {
-          setSports(data.sports.map(sport => sport.name))
+        const response = await sportsAPI.getAll()
+        if (response.sports) {
+          setSports(response.sports.map(sport => sport.name))
         }
       } catch (error) {
         console.error('Error fetching sports:', error)

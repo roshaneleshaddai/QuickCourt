@@ -2,12 +2,19 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, isAuthenticated, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/auth/login')
+  }
 
   return (
     <header className="bg-white shadow-sm border-b relative animate-lift">
@@ -43,7 +50,7 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
                 <span className="text-gray-700 text-sm font-medium">Hi, {user?.firstName || 'User'}</span>
-                <button onClick={logout} className="text-gray-600 hover:text-red-600 text-sm animate-scale">
+                <button onClick={handleLogout} className="text-gray-600 hover:text-red-600 text-sm animate-scale">
                   Logout
                 </button>
               </div>
@@ -88,7 +95,7 @@ export default function Header() {
                   <Link href="/profile" className="block px-3 py-3 text-gray-700 hover:text-green-600 rounded-lg hover:bg-gray-50 animate-lift">
                     Profile
                   </Link>
-                  <button onClick={logout} className="block w-full text-left px-3 py-3 text-gray-700 hover:text-red-600 rounded-lg hover:bg-red-50 animate-lift">
+                  <button onClick={handleLogout} className="block w-full text-left px-3 py-3 text-gray-700 hover:text-red-600 rounded-lg hover:bg-red-50 animate-lift">
                     Logout
                   </button>
                 </>

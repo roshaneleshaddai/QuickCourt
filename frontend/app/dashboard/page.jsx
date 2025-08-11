@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Calendar, Clock, MapPin, Star, Filter, Search, Plus, User, CreditCard, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { userAPI } from '@/lib/api'
@@ -9,13 +10,19 @@ import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('bookings')
   const [filterStatus, setFilterStatus] = useState('all')
 
-
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, authLoading, router])
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -37,8 +44,11 @@ export default function DashboardPage() {
       }
     }
     
-    fetchBookings()
-  }, [filterStatus])
+    // Only fetch bookings if user is authenticated
+    if (isAuthenticated && !authLoading) {
+      fetchBookings()
+    }
+  }, [filterStatus, isAuthenticated, authLoading])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -60,6 +70,30 @@ export default function DashboardPage() {
   )
 
   const completedBookings = bookings.filter(booking => booking.status === 'completed')
+
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login redirect message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
