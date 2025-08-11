@@ -59,6 +59,243 @@ html { scroll-behavior: smooth; }
   background-clip: text;
 }
 
+/* Hide scrollbars for horizontal carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Green-based Color Themes */
+.genre-badminton {
+  background: linear-gradient(135deg, #2d5016, #4a7c59);
+  color: white;
+}
+
+.genre-football {
+  background: linear-gradient(135deg, #16a085, #27ae60);
+  color: white;
+}
+
+.genre-cricket {
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  color: white;
+}
+
+.genre-swimming {
+  background: linear-gradient(135deg, #55a3ff, #74b9ff);
+  color: white;
+}
+
+.genre-tennis {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+}
+
+.genre-table-tennis {
+  background: linear-gradient(135deg, #81ecec, #00cec9);
+  color: white;
+}
+
+.genre-basketball {
+  background: linear-gradient(135deg, #00b894, #55efc4);
+  color: white;
+}
+
+.genre-volleyball {
+  background: linear-gradient(135deg, #a8e6cf, #88d8a3);
+  color: white;
+}
+
+.genre-default {
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  color: white;
+}
+
+/* Green Theme Variations */
+.green-primary {
+  background: linear-gradient(135deg, #00b894, #00cec9);
+}
+
+.green-secondary {
+  background: linear-gradient(135deg, #55efc4, #81ecec);
+}
+
+.green-accent {
+  background: linear-gradient(135deg, #2d3436, #636e72);
+}
+
+.green-light {
+  background: linear-gradient(135deg, #dcedc1, #a8e6cf);
+}
+
+.green-dark {
+  background: linear-gradient(135deg, #2d5016, #4a7c59);
+}
+
+/* Hover Animations */
+.animate-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.animate-lift {
+  transition: all 0.2s ease-in-out;
+}
+
+.animate-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.animate-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.animate-scale:hover {
+  transform: scale(1.05);
+}
+
+.animate-button {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.animate-button:hover::before {
+  left: 100%;
+}
+
+.animate-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Dynamic Center Alignment */
+.dynamic-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.content-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Responsive Grid System */
+.responsive-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  justify-content: center;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Green Sports Genre Tags */
+.tag-badminton { background: #2d5016; color: white; }
+.tag-football { background: #16a085; color: white; }
+.tag-cricket { background: #00b894; color: white; }
+.tag-swimming { background: #55a3ff; color: white; }
+.tag-tennis { background: #6c5ce7; color: white; }
+.tag-table-tennis { background: #81ecec; color: white; }
+.tag-basketball { background: #00b894; color: white; }
+.tag-volleyball { background: #a8e6cf; color: white; }
+
+/* Interactive Sport Cards */
+.sport-card {
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.sport-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 184, 148, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.sport-card:hover::before {
+  left: 100%;
+}
+
+.sport-card:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 25px 50px rgba(0, 184, 148, 0.2);
+}
+
+.sport-card-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Enhanced Popular Sports Grid */
+.sports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .sports-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
 /* Mobile touch improvements */
 @media (max-width: 768px) {
   .mobile-optimized {
@@ -68,5 +305,14 @@ html { scroll-behavior: smooth; }
   
   .mobile-optimized > * {
     scroll-snap-align: start;
+  }
+  
+  .content-center {
+    padding: 0 1rem;
+    text-align: center;
+  }
+  
+  .animate-hover:hover {
+    transform: translateY(-4px) scale(1.01);
   }
 }
