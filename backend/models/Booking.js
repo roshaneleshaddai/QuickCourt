@@ -63,7 +63,7 @@ const bookingSchema = new mongoose.Schema(
     },
     players: [
       {
-        name: { type: String, required: true, trim: true },
+        name: { type: String, required: false, trim: true },
         email: { type: String, trim: true, lowercase: true },
         phone: { type: String, trim: true },
       },

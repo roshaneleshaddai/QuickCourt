@@ -6,6 +6,51 @@ const { auth, authorize } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Helper function to normalize weekday format
+const normalizeWeekday = (date) => {
+  const shortDay = new Date(date)
+    .toLocaleDateString("en-US", { weekday: "short" })
+    .toLowerCase();
+  const longDay = new Date(date)
+    .toLocaleDateString("en-US", { weekday: "long" })
+    .toLowerCase();
+
+  return { shortDay, longDay };
+};
+
+// Helper function to find operating hours for a date
+const findOperatingHours = (facility, date) => {
+  const { shortDay, longDay } = normalizeWeekday(date);
+
+  // Try different possible formats
+  if (facility.operatingHours[shortDay]) {
+    return { day: shortDay, hours: facility.operatingHours[shortDay] };
+  }
+
+  if (facility.operatingHours[longDay]) {
+    return { day: longDay, hours: facility.operatingHours[longDay] };
+  }
+
+  // Try with first letter capitalized
+  const capitalizedShort = shortDay.charAt(0).toUpperCase() + shortDay.slice(1);
+  if (facility.operatingHours[capitalizedShort]) {
+    return {
+      day: capitalizedShort,
+      hours: facility.operatingHours[capitalizedShort],
+    };
+  }
+
+  const capitalizedLong = longDay.charAt(0).toUpperCase() + longDay.slice(1);
+  if (facility.operatingHours[capitalizedLong]) {
+    return {
+      day: capitalizedLong,
+      hours: facility.operatingHours[capitalizedLong],
+    };
+  }
+
+  return null;
+};
+
 // @route   POST /api/bookings
 // @desc    Create a new booking
 // @access  Private
@@ -24,13 +69,33 @@ router.post(
       .isFloat({ min: 0.5, max: 8 })
       .withMessage("Duration must be between 0.5 and 8 hours"),
     body("players").optional().isArray(),
+    body("players.*.name").optional().trim(),
+    body("players.*.email")
+      .optional()
+      .trim()
+      .isEmail()
+      .withMessage("Invalid email format"),
+    body("players.*.phone").optional().trim(),
     body("specialRequests").optional().trim().isLength({ max: 500 }),
   ],
   async (req, res) => {
     try {
+      console.log("Booking request received:", {
+        body: req.body,
+        user: req.user?._id,
+      });
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        console.log("Validation errors:", errors.array());
+        return res.status(400).json({
+          error: "Validation failed",
+          details: errors
+            .array()
+            .map((err) => `${err.path}: ${err.msg}`)
+            .join(", "),
+          errors: errors.array(),
+        });
       }
 
       const {
@@ -70,16 +135,6 @@ router.post(
         return res.status(400).json({ error: "Court not found or inactive" });
       }
 
-      // Check if facility is open on the booking date
-      const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
-        weekday: "lowercase",
-      });
-      if (!facility.operatingHours[dayOfWeek]?.isOpen) {
-        return res
-          .status(400)
-          .json({ error: "Facility is closed on this day" });
-      }
-
       // Check for booking conflicts
       const endTime = new Date(`2000-01-01 ${startTime}`);
       endTime.setHours(endTime.getHours() + duration);
@@ -99,7 +154,46 @@ router.post(
       });
 
       if (conflictingBooking) {
-        return res.status(400).json({ error: "Time slot is not available" });
+        return res.status(400).json({
+          error: "Time slot is not available",
+          details: `Court ${court.name} is already booked from ${conflictingBooking.startTime} to ${conflictingBooking.endTime} on this date`,
+        });
+      }
+
+      // Additional validation: Check if the booking time is within operating hours
+      const operatingHoursInfo = findOperatingHours(facility, date);
+
+      console.log("Booking validation - Date:", date);
+      console.log(
+        "Facility operating hours keys:",
+        Object.keys(facility.operatingHours)
+      );
+      console.log("Found operating hours info:", operatingHoursInfo);
+
+      if (!operatingHoursInfo || !operatingHoursInfo.hours.isOpen) {
+        return res.status(400).json({
+          error: "Facility is closed on this day",
+          details: `Facility is not open on this day. Available days: ${Object.keys(
+            facility.operatingHours
+          )
+            .filter((day) => facility.operatingHours[day]?.isOpen)
+            .join(", ")}`,
+        });
+      }
+
+      const operatingHours = operatingHoursInfo.hours;
+
+      // Check if start time and end time are within operating hours
+      const startHour = parseInt(startTime.split(":")[0]);
+      const endHour = parseInt(endTimeString.split(":")[0]);
+      const openHour = parseInt(operatingHours.open.split(":")[0]);
+      const closeHour = parseInt(operatingHours.close.split(":")[0]);
+
+      if (startHour < openHour || endHour > closeHour) {
+        return res.status(400).json({
+          error: "Booking time is outside operating hours",
+          details: `Facility operates from ${operatingHours.open} to ${operatingHours.close} on ${operatingHoursInfo.day}`,
+        });
       }
 
       // Calculate total amount
@@ -141,7 +235,31 @@ router.post(
       });
     } catch (error) {
       console.error("Create booking error:", error);
-      res.status(500).json({ error: "Server error while creating booking" });
+
+      // Handle validation errors
+      if (error.name === "ValidationError") {
+        const validationErrors = Object.values(error.errors).map(
+          (err) => err.message
+        );
+        return res.status(400).json({
+          error: "Validation failed",
+          details: validationErrors.join(", "),
+          validationErrors: error.errors,
+        });
+      }
+
+      // Handle duplicate key errors
+      if (error.code === 11000) {
+        return res.status(400).json({
+          error: "Booking conflict detected",
+          details: "This time slot may already be booked",
+        });
+      }
+
+      res.status(500).json({
+        error: "Server error while creating booking",
+        details: error.message,
+      });
     }
   }
 );
@@ -396,29 +514,79 @@ router.get(
         facility: facilityId,
         date: { $gte: startOfDay, $lt: endOfDay },
         status: { $in: ["confirmed", "pending"] },
-      });
+      }).populate("sport", "name icon");
 
       // Generate available time slots
-      const availableSlots = [];
-      const dayOfWeek = new Date(date).toLocaleDateString("en-US", {
-        weekday: "lowercase",
-      });
-      const operatingHours = facility.operatingHours[dayOfWeek];
+      const operatingHoursInfo = findOperatingHours(facility, date);
 
-      if (operatingHours && operatingHours.isOpen) {
-        // Generate time slots from opening to closing time
-        // This is a simplified version - you'd want more sophisticated logic
-        availableSlots.push({
-          message: "Available time slots calculation not yet implemented",
-          operatingHours: operatingHours,
+      console.log("Availability check - Date:", date);
+      console.log(
+        "Facility operating hours keys:",
+        Object.keys(facility.operatingHours)
+      );
+      console.log("Found operating hours info:", operatingHoursInfo);
+
+      let availableSlots = [];
+      let isFacilityOpen = false;
+
+      if (operatingHoursInfo && operatingHoursInfo.hours.isOpen) {
+        isFacilityOpen = true;
+        const operatingHours = operatingHoursInfo.hours;
+        const openHour = parseInt(operatingHours.open.split(":")[0]);
+        const closeHour = parseInt(operatingHours.close.split(":")[0]);
+
+        // Generate all possible time slots
+        for (let hour = openHour; hour < closeHour; hour++) {
+          const timeString = `${hour.toString().padStart(2, "0")}:00`;
+          availableSlots.push({
+            time: timeString,
+            display:
+              hour < 12
+                ? `${hour}:00 AM`
+                : hour === 12
+                ? "12:00 PM"
+                : `${hour - 12}:00 PM`,
+            isAvailable: true,
+          });
+        }
+
+        // Mark booked slots as unavailable
+        bookings.forEach((booking) => {
+          const startHour = parseInt(booking.startTime.split(":")[0]);
+          const endHour = parseInt(booking.endTime.split(":")[0]);
+
+          for (let hour = startHour; hour < endHour; hour++) {
+            const timeString = `${hour.toString().padStart(2, "0")}:00`;
+            const slot = availableSlots.find((s) => s.time === timeString);
+            if (slot) {
+              slot.isAvailable = false;
+              slot.booking = {
+                court: booking.court.name,
+                sport: booking.sport.name,
+                status: booking.status,
+              };
+            }
+          }
         });
       }
 
       res.json({
         facility: facility.name,
         date,
+        isFacilityOpen,
+        operatingHours: operatingHoursInfo || null,
         availableSlots,
-        existingBookings: bookings.length,
+        bookings: bookings.map((booking) => ({
+          id: booking._id,
+          court: booking.court.name,
+          sport: booking.sport.name,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          duration: booking.duration,
+          status: booking.status,
+          user: booking.user,
+        })),
+        totalBookings: bookings.length,
       });
     } catch (error) {
       console.error("Check availability error:", error);

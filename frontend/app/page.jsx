@@ -474,7 +474,7 @@ export default function Home() {
                     <div className="h-32 md:h-36 relative overflow-hidden">
                       {sportInfo.image ? (
                         <>
-                          <Image
+          <Image
                             src={sportInfo.image}
                             alt={sport.name}
                             fill

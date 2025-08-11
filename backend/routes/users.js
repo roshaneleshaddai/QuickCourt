@@ -124,21 +124,39 @@ router.put(
 // @access  Private
 router.get("/bookings", [auth], async (req, res) => {
   try {
+    console.log("GET /users/bookings called for user:", req.user._id);
     const { page = 1, limit = 10, status } = req.query;
     const skip = (page - 1) * limit;
 
     const filter = { user: req.user._id };
-    if (status) filter.status = status;
+    if (status && status !== "undefined") filter.status = status;
+
+    console.log("Booking filter:", filter);
 
     const bookings = await require("../models/Booking")
       .find(filter)
       .populate("facility", "name address images")
       .populate("sport", "name icon")
+      .populate("user", "firstName lastName email")
       .sort({ date: -1, startTime: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
     const total = await require("../models/Booking").countDocuments(filter);
+
+    console.log(`Found ${bookings.length} bookings for user ${req.user._id}`);
+    console.log(
+      "Sample booking:",
+      bookings[0]
+        ? {
+            id: bookings[0]._id,
+            facility: bookings[0].facility?.name,
+            sport: bookings[0].sport?.name,
+            date: bookings[0].date,
+            status: bookings[0].status,
+          }
+        : "No bookings"
+    );
 
     res.json({
       bookings,

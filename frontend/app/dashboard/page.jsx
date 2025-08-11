@@ -20,11 +20,18 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await userAPI.getBookings({ status: filterStatus === 'all' ? undefined : filterStatus })
+        console.log('Fetching bookings with filter:', filterStatus)
+        const params = {}
+        if (filterStatus !== 'all') {
+          params.status = filterStatus
+        }
+        const response = await userAPI.getBookings(params)
+        console.log('Bookings API response:', response)
         setBookings(response.bookings || [])
       } catch (error) {
         console.error('Error fetching bookings:', error)
-        toast.error('Failed to load bookings')
+        console.error('Error details:', error.message)
+        toast.error(`Failed to load bookings: ${error.message}`)
       } finally {
         setLoading(false)
       }
@@ -205,17 +212,19 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-4">
                 {filteredBookings.map((booking) => (
-                  <div key={booking.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div key={booking._id || booking.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
                         <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-                          <span className="text-2xl text-white">{booking.sport.icon}</span>
+                          <span className="text-2xl text-white">{booking.sport?.icon || '🏀'}</span>
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900">{booking.facility.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{booking.facility?.name || 'Unknown Facility'}</h3>
                           <div className="flex items-center text-gray-600 mt-1">
                             <MapPin className="h-4 w-4 mr-1" />
-                            <span className="text-sm">{booking.facility.address.city}, {booking.facility.address.state}</span>
+                            <span className="text-sm">
+                              {booking.facility?.address?.city || 'Unknown'}, {booking.facility?.address?.state || 'Unknown'}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                             <div className="flex items-center">
@@ -227,28 +236,30 @@ export default function DashboardPage() {
                               <span>{booking.startTime} - {booking.endTime}</span>
                             </div>
                             <span>•</span>
-                            <span>{booking.sport.name} - {booking.court.name}</span>
+                            <span>{booking.sport?.name || 'Unknown Sport'} - {booking.court?.name || 'Unknown Court'}</span>
                           </div>
-                          <div className="mt-2">
-                            <span className="text-sm text-gray-600">Players: </span>
-                            <span className="text-sm text-gray-900">
-                              {booking.players.map(player => player.name).join(', ')}
-                            </span>
-                          </div>
+                          {booking.players && booking.players.length > 0 && (
+                            <div className="mt-2">
+                              <span className="text-sm text-gray-600">Players: </span>
+                              <span className="text-sm text-gray-900">
+                                {booking.players.filter(p => p?.name).map(player => player.name).join(', ') || 'No players listed'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          {booking.status ? booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 'Unknown'}
                         </span>
-                        <p className="mt-2 text-lg font-semibold text-gray-900">₹{booking.totalAmount}</p>
-                        <p className="text-xs text-gray-600">Payment: {booking.paymentStatus}</p>
+                        <p className="mt-2 text-lg font-semibold text-gray-900">₹{booking.totalAmount || 0}</p>
+                        <p className="text-xs text-gray-600">Payment: {booking.paymentStatus || 'Unknown'}</p>
                       </div>
                     </div>
                     
                     <div className="mt-4 flex items-center space-x-3">
                       <Link
-                        href={`/bookings/${booking.id}`}
+                        href={`/bookings/${booking._id || booking.id}`}
                         className="text-green-600 hover:text-green-700 text-sm font-medium"
                       >
                         View Details

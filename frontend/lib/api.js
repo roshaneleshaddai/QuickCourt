@@ -23,8 +23,16 @@ async function apiCall(endpoint, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error("API Error Details:", {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        errorData,
+      });
       throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
+        errorData.error ||
+          errorData.details ||
+          `HTTP error! status: ${response.status}`
       );
     }
 
@@ -157,6 +165,12 @@ export const bookingsAPI = {
       body: JSON.stringify(bookingData),
     }),
 
+  createBooking: (bookingData) =>
+    apiCall("/bookings", {
+      method: "POST",
+      body: JSON.stringify(bookingData),
+    }),
+
   getAll: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiCall(`/bookings?${queryString}`);
@@ -176,6 +190,9 @@ export const bookingsAPI = {
     }),
 
   checkFacilityAvailability: (facilityId, date) =>
+    apiCall(`/bookings/facility/${facilityId}/availability?date=${date}`),
+
+  getFacilityAvailability: (facilityId, date) =>
     apiCall(`/bookings/facility/${facilityId}/availability?date=${date}`),
 };
 
