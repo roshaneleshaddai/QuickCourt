@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, CreditCard, MapPin, Star, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { facilitiesAPI, bookingsAPI } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
 
 export default function BookingPage() {
   const params = useParams()
   const router = useRouter()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const [facility, setFacility] = useState(null)
   const [loading, setLoading] = useState(true)
   const [bookingLoading, setBookingLoading] = useState(false)
@@ -29,6 +31,20 @@ export default function BookingPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [bookedSlots, setBookedSlots] = useState([])
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, authLoading, router])
+
+  // Redirect facility owners to their appropriate page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user && user.role === 'facility_owner') {
+      router.push('/facilityowner')
+    }
+  }, [isAuthenticated, authLoading, user, router])
+
   // Helper function to format date consistently and avoid timezone issues
   const formatDateToLocalString = (date) => {
     const year = date.getFullYear()
@@ -41,7 +57,18 @@ export default function BookingPage() {
     const fetchFacility = async () => {
       try {
         const response = await facilitiesAPI.getById(params.id)
-        setFacility(response.facility || response)
+        const facilityData = response.facility || response
+        
+        // Also fetch blocked time slots for this facility
+        try {
+          const blockedSlotsResponse = await facilitiesAPI.getBlockedTimeSlots(params.id)
+          facilityData.blockedSlots = blockedSlotsResponse.blockedSlots || []
+        } catch (blockedError) {
+          console.warn('Could not fetch blocked time slots:', blockedError)
+          facilityData.blockedSlots = []
+        }
+        
+        setFacility(facilityData)
       } catch (error) {
         console.error('Error fetching facility:', error)
         toast.error('Failed to load facility details')
@@ -74,18 +101,49 @@ export default function BookingPage() {
 
   // Check if a time slot is available
   const isTimeSlotAvailable = (time) => {
-    if (!bookedSlots.length) return true
-    
     const selectedStart = new Date(`2000-01-01 ${time}`)
     const selectedEnd = new Date(selectedStart.getTime() + (bookingData.duration * 60 * 60 * 1000))
     
-    return !bookedSlots.some(booking => {
-      const bookingStart = new Date(`2000-01-01 ${booking.startTime}`)
-      const bookingEnd = new Date(`2000-01-01 ${booking.endTime}`)
+    // Check for conflicts with existing bookings
+    if (bookedSlots.length > 0) {
+      const hasBookingConflict = bookedSlots.some(booking => {
+        const bookingStart = new Date(`2000-01-01 ${booking.startTime}`)
+        const bookingEnd = new Date(`2000-01-01 ${booking.endTime}`)
+        
+        // Check for overlap
+        return (selectedStart < bookingEnd && selectedEnd > bookingStart)
+      })
       
-      // Check for overlap
-      return (selectedStart < bookingEnd && selectedEnd > bookingStart)
-    })
+      if (hasBookingConflict) return false
+    }
+    
+    // Check for conflicts with blocked time slots
+    if (facility?.blockedSlots && facility.blockedSlots.length > 0) {
+      const hasBlockedConflict = facility.blockedSlots.some(blockedSlot => {
+        // Only check blocked slots for the selected date
+        if (blockedSlot.date !== bookingData.date) {
+          return false
+        }
+        
+        // Check if the blocked slot is for the selected court
+        // blockedSlot.court could be an ObjectId or a populated court object
+        const blockedCourtId = blockedSlot.court._id || blockedSlot.court
+        const selectedCourt = getSelectedCourt()
+        if (!selectedCourt || blockedCourtId.toString() !== selectedCourt._id.toString()) {
+          return false
+        }
+        
+        const blockedStart = new Date(`2000-01-01 ${blockedSlot.startTime}`)
+        const blockedEnd = new Date(`2000-01-01 ${blockedSlot.endTime}`)
+        
+        // Check for overlap
+        return (selectedStart < blockedEnd && selectedEnd > blockedStart)
+      })
+      
+      if (hasBlockedConflict) return false
+    }
+    
+    return true
   }
 
   // Filter available time slots based on booked slots
@@ -452,6 +510,30 @@ export default function BookingPage() {
     )
   }
 
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login redirect message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!facility) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -692,20 +774,57 @@ export default function BookingPage() {
                         ))}
                       </div>
                       
-                      {/* Show booked slots */}
-                      {bookedSlots.length > 0 && (
+                      {/* Show booked and blocked slots */}
+                      {(bookedSlots.length > 0 || (facility?.blockedSlots && facility.blockedSlots.length > 0)) && (
                         <div className="mt-4 pt-4 border-t">
-                          <p className="text-xs text-gray-500 mb-2">Booked slots:</p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {bookedSlots.map((booking, index) => (
-                              <div
-                                key={index}
-                                className="py-2 px-3 text-sm border border-red-200 bg-red-50 text-red-600 rounded-md text-center"
-                              >
-                                {booking.startTime} - {booking.endTime}
+                          {/* Booked slots */}
+                          {bookedSlots.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 mb-2">Booked slots:</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {bookedSlots.map((booking, index) => (
+                                  <div
+                                    key={`booking-${index}`}
+                                    className="py-2 px-3 text-sm border border-red-200 bg-red-50 text-red-600 rounded-md text-center"
+                                  >
+                                    {booking.startTime} - {booking.endTime}
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          )}
+                          
+                                                     {/* Blocked slots */}
+                           {facility?.blockedSlots && facility.blockedSlots.length > 0 && (
+                             <div>
+                               <p className="text-xs text-gray-500 mb-2">Blocked slots:</p>
+                               <div className="grid grid-cols-2 gap-2">
+                                 {facility.blockedSlots
+                                   .filter(blockedSlot => {
+                                     // Filter by date
+                                     if (blockedSlot.date !== bookingData.date) return false
+                                     
+                                     // Filter by court (handle both ObjectId and populated court)
+                                     const blockedCourtId = blockedSlot.court._id || blockedSlot.court
+                                     const selectedCourt = getSelectedCourt()
+                                     if (!selectedCourt || blockedCourtId.toString() !== selectedCourt._id.toString()) {
+                                       return false
+                                     }
+                                     
+                                     return true
+                                   })
+                                   .map((blockedSlot, index) => (
+                                     <div
+                                       key={`blocked-${index}`}
+                                       className="py-2 px-3 text-sm border border-orange-200 bg-orange-50 text-orange-600 rounded-md text-center"
+                                       title={blockedSlot.reason ? `Blocked: ${blockedSlot.reason}` : 'Blocked time slot'}
+                                     >
+                                       {blockedSlot.startTime} - {blockedSlot.endTime}
+                                     </div>
+                                   ))}
+                               </div>
+                             </div>
+                           )}
                         </div>
                       )}
                     </div>

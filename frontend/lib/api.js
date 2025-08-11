@@ -37,18 +37,39 @@ async function apiCall(endpoint, options = {}) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorData = {};
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
+      try {
+        // Try to parse error response as JSON
+        const errorText = await response.text();
+        if (errorText) {
+          try {
+            errorData = JSON.parse(errorText);
+            errorMessage =
+              errorData.error ||
+              errorData.details ||
+              errorData.message ||
+              errorMessage;
+          } catch (parseError) {
+            // If JSON parsing fails, use the raw text
+            errorData = { rawError: errorText };
+            errorMessage = errorText || errorMessage;
+          }
+        }
+      } catch (textError) {
+        console.warn("Could not read error response text:", textError);
+      }
+
       console.error("API Error Details:", {
         status: response.status,
         statusText: response.statusText,
         url: response.url,
         errorData,
+        errorMessage,
       });
-      throw new Error(
-        errorData.error ||
-          errorData.details ||
-          `HTTP error! status: ${response.status}`
-      );
+
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -56,6 +77,14 @@ async function apiCall(endpoint, options = {}) {
     return data;
   } catch (error) {
     console.error("API call failed:", error);
+
+    // If it's a network error (like server not running), provide a helpful message
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      throw new Error(
+        `Network error: Unable to connect to server at ${API_BASE_URL}. Please check if the backend server is running.`
+      );
+    }
+
     throw error;
   }
 }
@@ -137,6 +166,8 @@ export const facilitiesAPI = {
 
   checkAvailability: (id, date) =>
     apiCall(`/facilities/${id}/availability?date=${date}`),
+
+  getBlockedTimeSlots: (id) => apiCall(`/facilities/${id}/blocked-slots`),
 };
 
 // Sports API calls
@@ -210,7 +241,7 @@ export const bookingsAPI = {
     apiCall(`/bookings/facility/${facilityId}/availability?date=${date}`),
 
   getFacilityAvailability: (facilityId, date) =>
-    apiCall(`/bookings/facility/${facilityId}/availability?date=${date}`),
+    apiCall(`/facilities/${facilityId}/availability?date=${date}`),
 };
 
 // Facility Owner API calls
@@ -221,18 +252,39 @@ export const facilityOwnerAPI = {
     return apiCall(`/facilities/my-facilities?${queryString}`);
   },
 
+  // Create a new facility
+  create: (facilityData) =>
+    apiCall("/facilities", {
+      method: "POST",
+      body: JSON.stringify(facilityData),
+    }),
+
+  // Update a facility
+  update: (id, updateData) =>
+    apiCall(`/facilities/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    }),
+
+  // Delete a facility
+  delete: (id) =>
+    apiCall(`/facilities/${id}`, {
+      method: "DELETE",
+    }),
+
   // Get dashboard statistics for facility owner
-  getDashboardStats: () => apiCall("/facility-owner/dashboard/stats"),
+  getDashboardStats: () =>
+    apiCall("/facilities/facility-owner/dashboard/stats"),
 
   // Get all bookings for owner's facilities
   getMyFacilityBookings: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    return apiCall(`/facility-owner/bookings?${queryString}`);
+    return apiCall(`/facilities/facility-owner/bookings?${queryString}`);
   },
 
   // Update booking status
   updateBookingStatus: (bookingId, status, notes = "") =>
-    apiCall(`/facility-owner/bookings/${bookingId}/status`, {
+    apiCall(`/facilities/facility-owner/bookings/${bookingId}/status`, {
       method: "PUT",
       body: JSON.stringify({ status, notes }),
     }),
@@ -240,13 +292,17 @@ export const facilityOwnerAPI = {
   // Get facility availability and blocked slots
   getFacilityAvailability: (facilityId, date) =>
     apiCall(
-      `/facility-owner/facilities/${facilityId}/availability?date=${date}`
+      `/facilities/facility-owner/${facilityId}/availability?date=${date}`
     ),
+
+  // Get all blocked time slots for a facility
+  getBlockedTimeSlots: (facilityId) =>
+    apiCall(`/facilities/facility-owner/${facilityId}/blocked-slots`),
 
   // Block/unblock time slots
   blockTimeSlot: (facilityId, courtId, date, startTime, endTime, reason = "") =>
     apiCall(
-      `/facility-owner/facilities/${facilityId}/courts/${courtId}/block`,
+      `/facilities/facility-owner/${facilityId}/courts/${courtId}/block`,
       {
         method: "POST",
         body: JSON.stringify({ date, startTime, endTime, reason }),
@@ -256,7 +312,7 @@ export const facilityOwnerAPI = {
   // Unblock time slot
   unblockTimeSlot: (facilityId, courtId, blockId) =>
     apiCall(
-      `/facility-owner/facilities/${facilityId}/courts/${courtId}/unblock/${blockId}`,
+      `/facilities/facility-owner/${facilityId}/courts/${courtId}/unblock/${blockId}`,
       {
         method: "DELETE",
       }

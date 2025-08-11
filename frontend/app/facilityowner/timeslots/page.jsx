@@ -26,6 +26,7 @@ export default function TimeSlotsManagement() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [blockFormData, setBlockFormData] = useState({
@@ -41,7 +42,12 @@ export default function TimeSlotsManagement() {
 
   useEffect(() => {
     if (selectedFacility && selectedDate) {
-      fetchFacilityAvailability();
+      // Add a small delay to prevent rapid API calls
+      const timeoutId = setTimeout(() => {
+        fetchFacilityAvailability();
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedFacility, selectedDate]);
 
@@ -66,13 +72,18 @@ export default function TimeSlotsManagement() {
   };
 
   const fetchFacilityAvailability = async () => {
-    if (!selectedFacility || !selectedDate) return;
+    if (!selectedFacility || !selectedDate || availabilityLoading) return;
+
+    console.log('Fetching availability for:', selectedFacility._id, selectedDate);
+    setAvailabilityLoading(true);
 
     try {
       const availability = await facilityOwnerAPI.getFacilityAvailability(
         selectedFacility._id,
         selectedDate
       );
+      
+      console.log('Availability data received:', availability);
       
       // Update the facility with availability data
       setFacilities(prev => 
@@ -82,9 +93,17 @@ export default function TimeSlotsManagement() {
             : f
         )
       );
+      
+      // Update selected facility with availability data
+      setSelectedFacility(prev => ({
+        ...prev,
+        availability: availability
+      }));
     } catch (err) {
       console.error("Error fetching availability:", err);
       toast.error("Failed to load availability data");
+    } finally {
+      setAvailabilityLoading(false);
     }
   };
 
@@ -167,8 +186,9 @@ export default function TimeSlotsManagement() {
   };
 
   const isTimeSlotBlocked = (court, time) => {
-    if (!court.blockedSlots) return false;
-    return court.blockedSlots.some(block => {
+    if (!selectedFacility?.availability?.blockedSlots) return false;
+    return selectedFacility.availability.blockedSlots.some(block => {
+      if (block.court.toString() !== court._id.toString()) return false;
       const blockStart = new Date(`2000-01-01 ${block.startTime}`);
       const blockEnd = new Date(`2000-01-01 ${block.endTime}`);
       const slotTime = new Date(`2000-01-01 ${time}`);
@@ -177,8 +197,9 @@ export default function TimeSlotsManagement() {
   };
 
   const isTimeSlotBooked = (court, time) => {
-    if (!court.bookings) return false;
-    return court.bookings.some(booking => {
+    if (!selectedFacility?.availability?.bookings) return false;
+    return selectedFacility.availability.bookings.some(booking => {
+      if (booking.court !== court.name) return false;
       const bookingStart = new Date(`2000-01-01 ${booking.startTime}`);
       const bookingEnd = new Date(`2000-01-01 ${booking.endTime}`);
       const slotTime = new Date(`2000-01-01 ${time}`);
@@ -187,8 +208,19 @@ export default function TimeSlotsManagement() {
   };
 
   const getTimeSlotStatus = (court, time) => {
-    if (isTimeSlotBlocked(court, time)) return "blocked";
-    if (isTimeSlotBooked(court, time)) return "booked";
+    const blocked = isTimeSlotBlocked(court, time);
+    const booked = isTimeSlotBooked(court, time);
+    
+    if (blocked) {
+      console.log(`Time slot ${time} is BLOCKED for court ${court.name}`);
+      return "blocked";
+    }
+    if (booked) {
+      console.log(`Time slot ${time} is BOOKED for court ${court.name}`);
+      return "booked";
+    }
+    
+    console.log(`Time slot ${time} is AVAILABLE for court ${court.name}`);
     return "available";
   };
 
@@ -295,6 +327,7 @@ export default function TimeSlotsManagement() {
               min={new Date().toISOString().split("T")[0]}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             />
+           
           </div>
         </div>
       </div>
@@ -416,22 +449,26 @@ export default function TimeSlotsManagement() {
                         </div>
 
                         {/* Blocked Slots */}
-                        {court.blockedSlots && court.blockedSlots.length > 0 && (
+                        {selectedFacility?.availability?.blockedSlots?.filter(block => 
+                          block.court.toString() === court._id.toString()
+                        ).length > 0 && (
                           <div className="mt-4 pt-4 border-t border-gray-200">
                             <h5 className="text-sm font-medium text-gray-900 mb-2">Blocked Time Slots</h5>
                             <div className="space-y-2">
-                              {court.blockedSlots.map((block) => (
-                                <div key={block._id} className="flex items-center justify-between bg-red-50 p-2 rounded">
+                              {selectedFacility.availability.blockedSlots
+                                .filter(block => block.court.toString() === court._id.toString())
+                                .map((block) => (
+                                <div key={block.id} className="flex items-center justify-between bg-red-50 p-2 rounded">
                                   <div className="text-sm">
                                     <span className="font-medium">
-                                      {block.date} {block.startTime} - {block.endTime}
+                                      {selectedDate} {block.startTime} - {block.endTime}
                                     </span>
                                     {block.reason && (
                                       <span className="text-gray-600 ml-2">({block.reason})</span>
                                     )}
                                   </div>
                                   <button
-                                    onClick={() => handleUnblockTimeSlot(block._id)}
+                                    onClick={() => handleUnblockTimeSlot(block.id)}
                                     className="text-red-600 hover:text-red-800 p-1"
                                     title="Unblock time slot"
                                   >

@@ -41,12 +41,16 @@ export default function FacilitiesManagement() {
       zipCode: "",
       country: "",
     },
+    location: {
+      type: "Point",
+      coordinates: [0, 0], // Default coordinates - should be updated with actual location
+    },
     contactInfo: {
       phone: "",
       email: "",
       website: "",
     },
-    sports: [],
+    sports: [{ sport: null, courts: [] }], // Start with one empty sport
     amenities: [],
     operatingHours: {
       monday: { open: "09:00", close: "22:00", isOpen: true },
@@ -56,6 +60,12 @@ export default function FacilitiesManagement() {
       friday: { open: "09:00", close: "22:00", isOpen: true },
       saturday: { open: "09:00", close: "22:00", isOpen: true },
       sunday: { open: "09:00", close: "22:00", isOpen: true },
+    },
+    policies: {
+      cancellationPolicy: "24 hours notice required",
+      bookingAdvance: 7,
+      maxBookingDuration: 4,
+      minBookingDuration: 1,
     },
   });
   const [courtFormData, setCourtFormData] = useState({
@@ -78,7 +88,56 @@ export default function FacilitiesManagement() {
 
       // Fetch facilities owned by the current user
       const facilitiesData = await facilityOwnerAPI.getMyFacilities();
-      setFacilities(facilitiesData.facilities || []);
+      
+      console.log('Raw facilities data:', facilitiesData);
+      console.log('First facility sample:', facilitiesData.facilities?.[0]);
+      
+      // Validate and clean up facilities data
+      const validatedFacilities = (facilitiesData.facilities || []).map(facility => ({
+        _id: facility._id,
+        name: facility.name || 'Unnamed Facility',
+        description: facility.description || '',
+        address: facility.address || {
+          street: 'No address',
+          city: 'No city',
+          state: '',
+          zipCode: '',
+          country: '',
+        },
+        location: facility.location || {
+          type: "Point",
+          coordinates: [0, 0],
+        },
+        contactInfo: facility.contactInfo || {
+          phone: '',
+          email: '',
+          website: '',
+        },
+        sports: facility.sports || [],
+        amenities: facility.amenities || [],
+        operatingHours: facility.operatingHours || {
+          monday: { open: "09:00", close: "22:00", isOpen: true },
+          tuesday: { open: "09:00", close: "22:00", isOpen: true },
+          wednesday: { open: "09:00", close: "22:00", isOpen: true },
+          thursday: { open: "09:00", close: "22:00", isOpen: true },
+          friday: { open: "09:00", close: "22:00", isOpen: true },
+          saturday: { open: "09:00", close: "22:00", isOpen: true },
+          sunday: { open: "09:00", close: "22:00", isOpen: true },
+        },
+        rating: facility.rating || { average: 0, count: 0 },
+        isActive: facility.isActive !== undefined ? facility.isActive : true,
+        isVerified: facility.isVerified !== undefined ? facility.isVerified : false,
+        policies: facility.policies || {
+          cancellationPolicy: "24 hours notice required",
+          bookingAdvance: 7,
+          maxBookingDuration: 4,
+          minBookingDuration: 1,
+        },
+        createdAt: facility.createdAt,
+        updatedAt: facility.updatedAt,
+      }));
+      
+      setFacilities(validatedFacilities);
 
       // Fetch available sports
       const sportsData = await sportsAPI.getAll();
@@ -183,12 +242,16 @@ export default function FacilitiesManagement() {
         zipCode: "",
         country: "",
       },
+      location: {
+        type: "Point",
+        coordinates: [0, 0],
+      },
       contactInfo: {
         phone: "",
         email: "",
         website: "",
       },
-      sports: [],
+      sports: [{ sport: null, courts: [] }], // Start with one empty sport
       amenities: [],
       operatingHours: {
         monday: { open: "09:00", close: "22:00", isOpen: true },
@@ -198,6 +261,12 @@ export default function FacilitiesManagement() {
         friday: { open: "09:00", close: "22:00", isOpen: true },
         saturday: { open: "09:00", close: "22:00", isOpen: true },
         sunday: { open: "09:00", close: "22:00", isOpen: true },
+      },
+      policies: {
+        cancellationPolicy: "24 hours notice required",
+        bookingAdvance: 7,
+        maxBookingDuration: 4,
+        minBookingDuration: 1,
       },
     });
   };
@@ -216,13 +285,41 @@ export default function FacilitiesManagement() {
   const openEditModal = (facility) => {
     setSelectedFacility(facility);
     setFormData({
-      name: facility.name,
-      description: facility.description,
-      address: facility.address,
-      contactInfo: facility.contactInfo,
-      sports: facility.sports,
-      amenities: facility.amenities,
-      operatingHours: facility.operatingHours,
+      name: facility.name || '',
+      description: facility.description || '',
+      address: facility.address || {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: '',
+      },
+      location: facility.location || {
+        type: "Point",
+        coordinates: [0, 0],
+      },
+      contactInfo: facility.contactInfo || {
+        phone: '',
+        email: '',
+        website: '',
+      },
+      sports: facility.sports || [],
+      amenities: facility.amenities || [],
+      operatingHours: facility.operatingHours || {
+        monday: { open: "09:00", close: "22:00", isOpen: true },
+        tuesday: { open: "09:00", close: "22:00", isOpen: true },
+        wednesday: { open: "09:00", close: "22:00", isOpen: true },
+        thursday: { open: "09:00", close: "22:00", isOpen: true },
+        friday: { open: "09:00", close: "22:00", isOpen: true },
+        saturday: { open: "09:00", close: "22:00", isOpen: true },
+        sunday: { open: "09:00", close: "22:00", isOpen: true },
+      },
+      policies: facility.policies || {
+        cancellationPolicy: "24 hours notice required",
+        bookingAdvance: 7,
+        maxBookingDuration: 4,
+        minBookingDuration: 1,
+      },
     });
     setShowEditModal(true);
   };
@@ -327,16 +424,16 @@ export default function FacilitiesManagement() {
                   <div className="flex items-center text-sm text-gray-600">
                     <MapPin className="h-4 w-4 mr-2" />
                     <span>
-                      {facility.address.street}, {facility.address.city}
+                      {facility.address?.street || 'No address'}, {facility.address?.city || 'No city'}
                     </span>
                   </div>
-                  {facility.contactInfo.phone && (
+                  {facility.contactInfo?.phone && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Phone className="h-4 w-4 mr-2" />
                       <span>{facility.contactInfo.phone}</span>
                     </div>
                   )}
-                  {facility.contactInfo.email && (
+                  {facility.contactInfo?.email && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Mail className="h-4 w-4 mr-2" />
                       <span>{facility.contactInfo.email}</span>
@@ -347,10 +444,10 @@ export default function FacilitiesManagement() {
                 <div className="border-t pt-4">
                   <h4 className="font-medium text-gray-900 mb-3">Sports & Courts</h4>
                   <div className="space-y-2">
-                    {facility.sports.map((sport) => (
-                      <div key={sport.sport._id} className="flex justify-between items-center">
+                    {facility.sports?.map((sport) => (
+                      <div key={sport.sport?._id || sport.sport} className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">
-                          {sport.sport.name} ({sport.courts.length} courts)
+                          {sport.sport?.name || 'Unknown Sport'} ({sport.courts?.length || 0} courts)
                         </span>
                         <button
                           onClick={() => openCourtModal(facility, sport)}
@@ -359,14 +456,16 @@ export default function FacilitiesManagement() {
                           Add Court
                         </button>
                       </div>
-                    ))}
+                    )) || (
+                      <p className="text-sm text-gray-500">No sports configured</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="border-t pt-4 mt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">
-                      Total Courts: {facility.sports.reduce((total, sport) => total + sport.courts.length, 0)}
+                      Total Courts: {facility.sports?.reduce((total, sport) => total + (sport.courts?.length || 0), 0) || 0}
                     </span>
                     <span className="text-gray-600">
                       Rating: {facility.rating?.average?.toFixed(1) || "N/A"} ⭐
@@ -531,6 +630,171 @@ export default function FacilitiesManagement() {
                   />
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  value={formData.contactInfo.website}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      contactInfo: { ...formData.contactInfo, website: e.target.value },
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              {/* Sports Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sports & Courts
+                </label>
+                <div className="space-y-3">
+                  {formData.sports.map((sport, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-700">
+                          {sport.sport?.name || 'Select Sport'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSports = formData.sports.filter((_, i) => i !== index);
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <select
+                          value={sport.sport?._id || ''}
+                          onChange={(e) => {
+                            const selectedSport = availableSports.find(s => s._id === e.target.value);
+                            const newSports = [...formData.sports];
+                            newSports[index] = {
+                              ...newSports[index],
+                              sport: selectedSport,
+                              courts: newSports[index].courts || []
+                            };
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        >
+                          <option value="">Select Sport</option>
+                          {availableSports.map((sportOption) => (
+                            <option key={sportOption._id} value={sportOption._id}>
+                              {sportOption.name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Initial courts"
+                          value={sport.courts?.length || 1}
+                          onChange={(e) => {
+                            const courtCount = parseInt(e.target.value) || 1;
+                            const newSports = [...formData.sports];
+                            newSports[index] = {
+                              ...newSports[index],
+                              courts: Array(courtCount).fill().map((_, i) => ({
+                                name: `Court ${i + 1}`,
+                                type: "indoor",
+                                surface: "",
+                                capacity: 2,
+                                hourlyRate: 50,
+                                isActive: true,
+                                amenities: [],
+                                images: []
+                              }))
+                            };
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        sports: [...formData.sports, { sport: null, courts: [] }]
+                      });
+                    }}
+                    className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors"
+                  >
+                    + Add Sport
+                  </button>
+                </div>
+              </div>
+
+              {/* Amenities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Amenities
+                </label>
+                <div className="space-y-2">
+                  {formData.amenities.map((amenity, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Amenity name"
+                        value={amenity.name}
+                        onChange={(e) => {
+                          const newAmenities = [...formData.amenities];
+                          newAmenities[index] = { ...newAmenities[index], name: e.target.value };
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Icon (optional)"
+                        value={amenity.icon || ''}
+                        onChange={(e) => {
+                          const newAmenities = [...formData.amenities];
+                          newAmenities[index] = { ...newAmenities[index], icon: e.target.value };
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newAmenities = formData.amenities.filter((_, i) => i !== index);
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="text-red-600 hover:text-red-700 p-2"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        amenities: [...formData.amenities, { name: '', description: '', icon: '' }]
+                      });
+                    }}
+                    className="text-green-600 hover:text-green-700 text-sm font-medium"
+                  >
+                    + Add Amenity
+                  </button>
+                </div>
+              </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
@@ -560,7 +824,6 @@ export default function FacilitiesManagement() {
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Edit Facility</h2>
             <form onSubmit={handleEditFacility} className="space-y-4">
-              {/* Same form fields as Add Modal */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Facility Name
@@ -583,6 +846,298 @@ export default function FacilitiesManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   rows="3"
                 />
+              </div>
+
+              {/* Address Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Street Address
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address.street}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address: { ...formData.address, street: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address.city}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address: { ...formData.address, city: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address.state}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address: { ...formData.address, state: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ZIP Code
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address.zipCode}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address: { ...formData.address, zipCode: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.address.country}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        address: { ...formData.address, country: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Contact Info Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.contactInfo.phone}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        contactInfo: { ...formData.contactInfo, phone: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.contactInfo.email}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        contactInfo: { ...formData.contactInfo, email: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  value={formData.contactInfo.website}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      contactInfo: { ...formData.contactInfo, website: e.target.value },
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              {/* Sports Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sports & Courts
+                </label>
+                <div className="space-y-3">
+                  {formData.sports.map((sport, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-700">
+                          {sport.sport?.name || 'Select Sport'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSports = formData.sports.filter((_, i) => i !== index);
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <select
+                          value={sport.sport?._id || ''}
+                          onChange={(e) => {
+                            const selectedSport = availableSports.find(s => s._id === e.target.value);
+                            const newSports = [...formData.sports];
+                            newSports[index] = {
+                              ...newSports[index],
+                              sport: selectedSport,
+                              courts: newSports[index].courts || []
+                            };
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        >
+                          <option value="">Select Sport</option>
+                          {availableSports.map((sportOption) => (
+                            <option key={sportOption._id} value={sportOption._id}>
+                              {sportOption.name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Initial courts"
+                          value={sport.courts?.length || 1}
+                          onChange={(e) => {
+                            const courtCount = parseInt(e.target.value) || 1;
+                            const newSports = [...formData.sports];
+                            newSports[index] = {
+                              ...newSports[index],
+                              courts: Array(courtCount).fill().map((_, i) => ({
+                                name: `Court ${i + 1}`,
+                                type: "indoor",
+                                surface: "",
+                                capacity: 2,
+                                hourlyRate: 50,
+                                isActive: true,
+                                amenities: [],
+                                images: []
+                              }))
+                            };
+                            setFormData({ ...formData, sports: newSports });
+                          }}
+                          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        sports: [...formData.sports, { sport: null, courts: [] }]
+                      });
+                    }}
+                    className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600 transition-colors"
+                  >
+                    + Add Sport
+                  </button>
+                </div>
+              </div>
+
+              {/* Amenities */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Amenities
+                </label>
+                <div className="space-y-2">
+                  {formData.amenities.map((amenity, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Amenity name"
+                        value={amenity.name}
+                        onChange={(e) => {
+                          const newAmenities = [...formData.amenities];
+                          newAmenities[index] = { ...newAmenities[index], name: e.target.value };
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Icon (optional)"
+                        value={amenity.icon || ''}
+                        onChange={(e) => {
+                          const newAmenities = [...formData.amenities];
+                          newAmenities[index] = { ...newAmenities[index], icon: e.target.value };
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newAmenities = formData.amenities.filter((_, i) => i !== index);
+                          setFormData({ ...formData, amenities: newAmenities });
+                        }}
+                        className="text-red-600 hover:text-red-700 p-2"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        amenities: [...formData.amenities, { name: '', description: '', icon: '' }]
+                      });
+                    }}
+                    className="text-green-600 hover:text-green-700 text-sm font-medium"
+                  >
+                    + Add Amenity
+                  </button>
+                </div>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button

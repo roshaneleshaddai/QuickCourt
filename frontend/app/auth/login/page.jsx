@@ -1,22 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, user, isAuthenticated, loading } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      // Redirect based on user role
+      if (user.role === 'facility_owner') {
+        router.push('/facilityowner')
+      } else if (user.role === 'admin') {
+        router.push('/admin') // You can add admin dashboard later
+      } else {
+        router.push('/dashboard')
+      }
+    }
+  }, [isAuthenticated, user, router, loading])
+
+  // If already authenticated, redirect immediately
+  if (!loading && isAuthenticated && user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -33,10 +60,13 @@ export default function LoginPage() {
     try {
       const result = await login(formData)
       if (result.success) {
-        router.push('/dashboard')
+        // The redirect will be handled by the useEffect above
+        // Show a brief loading message
+        toast.success('Login successful! Redirecting...')
       }
     } catch (error) {
       console.error('Login error:', error)
+      toast.error('Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

@@ -19,10 +19,16 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate limiting - More lenient for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased for development)
+  message: {
+    error: "Too many requests, please try again later.",
+    retryAfter: Math.ceil((15 * 60) / 1000), // 15 minutes in seconds
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 

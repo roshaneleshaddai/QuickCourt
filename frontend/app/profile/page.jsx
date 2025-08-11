@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { User, Mail, Phone, MapPin, Camera, Edit3, Save, X, Bell, Shield, CreditCard, Heart } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { userAPI } from '@/lib/api'
@@ -9,12 +10,27 @@ import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
 
 export default function ProfilePage() {
-  const { user: authUser, updateUser } = useAuth()
+  const router = useRouter()
+  const { user: authUser, updateUser, isAuthenticated, loading: authLoading } = useAuth()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const [formData, setFormData] = useState({})
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, authLoading, router])
+
+  // Redirect facility owners to their appropriate page
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && authUser && authUser.role === 'facility_owner') {
+      router.push('/facilityowner/profile')
+    }
+  }, [isAuthenticated, authLoading, authUser, router])
 
   const sports = [
     { id: 'badminton', name: 'Badminton', icon: '🏸' },
@@ -94,6 +110,30 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      </div>
+    )
+  }
+
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login redirect message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
       </div>
     )
   }
