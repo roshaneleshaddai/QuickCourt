@@ -23,7 +23,7 @@ import {
 import toast from "react-hot-toast";
 
 export default function BookingsManagement() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +33,11 @@ export default function BookingsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Debug user authentication
+  useEffect(() => {
+    console.log('User auth state:', { user, isAuthenticated, authLoading });
+  }, [user, isAuthenticated, authLoading]);
 
   useEffect(() => {
     fetchBookings();
@@ -52,11 +57,25 @@ export default function BookingsManagement() {
         sort: "-createdAt",
       };
 
+      // Clean up params - remove undefined values
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined || params[key] === '') {
+          delete params[key];
+        }
+      });
+
+      console.log('Fetching bookings with params:', params);
+      console.log('API call to:', '/facilities/facility-owner/bookings');
+      console.log('User token:', localStorage.getItem('token'));
+
       const response = await facilityOwnerAPI.getMyFacilityBookings(params);
+      console.log('Bookings response:', response);
+      
       setBookings(response.bookings || []);
       setTotalPages(Math.ceil((response.total || 0) / itemsPerPage));
     } catch (err) {
       console.error("Error fetching bookings:", err);
+      console.error("Error details:", err.message, err.stack);
       setError(err.message);
       toast.error("Failed to load bookings");
     } finally {
