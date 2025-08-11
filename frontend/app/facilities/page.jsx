@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, MapPin, Star, Filter, Grid, List, Clock, Users, Wifi, Car, Coffee } from 'lucide-react'
+import { Search, MapPin, Star, Filter, X, Menu } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { facilitiesAPI } from '@/lib/api'
@@ -11,346 +11,422 @@ export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [venueSearch, setVenueSearch] = useState('')
   const [selectedSport, setSelectedSport] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [priceRange, setPriceRange] = useState('')
-  const [rating, setRating] = useState('')
-  const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
+  const [minPrice, setMinPrice] = useState(0)
+  const [maxPrice, setMaxPrice] = useState(5500)
+  const [venueType, setVenueType] = useState({ indoor: false, outdoor: false })
+  const [ratingFilter, setRatingFilter] = useState('')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const sports = [
-    { id: 1, name: 'Badminton', icon: '🏸' },
-    { id: 2, name: 'Tennis', icon: '🎾' },
-    { id: 3, name: 'Basketball', icon: '🏀' },
-    { id: 4, name: 'Soccer', icon: '⚽' }
+    'Badminton',
+    'Tennis', 
+    'Basketball',
+    'Football',
+    'Cricket',
+    'Swimming',
+    'Table Tennis',
+    'Volleyball'
   ]
+
+  // Mock facilities data to match wireframe
+  const mockFacilities = Array.from({ length: 12 }, (_, i) => ({
+    _id: i + 1,
+    name: 'SRR Badminton',
+    rating: { average: 4.5, count: 6 },
+    location: 'Vaishnavdevi Cir',
+    price: 200,
+    sport: 'Badminton',
+    type: i % 2 === 0 ? 'Indoor' : 'Outdoor',
+    tags: ['Top Rated', 'Budget'],
+    image: null
+  }))
 
   useEffect(() => {
     const fetchFacilities = async () => {
       try {
-        // Only include parameters that have values
-        const params = {}
-        if (searchTerm) params.search = searchTerm
-        if (selectedSport) params.sport = selectedSport
-        if (selectedCity) params.city = selectedCity
-        if (rating) params.rating = rating
-        params.page = 1
-        params.limit = 20
-
-        console.log('Sending params to facilities API:', params)
-        const response = await facilitiesAPI.getAll(params)
-        console.log('Facilities API response:', response)
-        console.log('Facilities data structure:', response.facilities?.[0])
-        console.log('First facility sports:', response.facilities?.[0]?.sports)
-        console.log('First facility amenities:', response.facilities?.[0]?.amenities)
+        setLoading(true)
+        // For now, using mock data to match wireframe exactly
+        setTimeout(() => {
+          setFacilities(mockFacilities)
+          setLoading(false)
+        }, 1000)
         
-        // Ensure we have an array of facilities
-        if (response.facilities && Array.isArray(response.facilities)) {
-          setFacilities(response.facilities)
-        } else {
-          console.warn('Facilities data is not an array:', response.facilities)
-          setFacilities([])
-        }
+        // Real API call would be:
+        // const response = await facilitiesAPI.getAll({ page: currentPage, limit: 12 })
+        // setFacilities(response.facilities || [])
       } catch (error) {
         console.error('Error fetching facilities:', error)
         toast.error('Failed to load facilities')
-      } finally {
         setLoading(false)
       }
     }
     
     fetchFacilities()
-  }, [searchTerm, selectedSport, selectedCity, rating])
+  }, [currentPage])
 
-  const getAmenityIcon = (amenity) => {
-    // Ensure amenity is a string
-    if (typeof amenity !== 'string') {
-      return <span className="h-4 w-4 bg-gray-300 rounded-full"></span>
-    }
-    
-    switch (amenity.toLowerCase()) {
-      case 'wifi': return <Wifi className="h-4 w-4" />
-      case 'parking': return <Car className="h-4 w-4" />
-      case 'cafeteria': return <Coffee className="h-4 w-4" />
-      default: return <span className="h-4 w-4 bg-gray-300 rounded-full"></span>
-    }
+  const clearFilters = () => {
+    setSearchTerm('')
+    setVenueSearch('')
+    setSelectedSport('')
+    setMinPrice(0)
+    setMaxPrice(5500)
+    setVenueType({ indoor: false, outdoor: false })
+    setRatingFilter('')
   }
 
-  const FacilityCard = ({ facility }) => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-             <div className="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-         <span className="text-6xl text-white opacity-80">
-           {(() => {
-             // Get the first sport to determine the icon
-             const firstSport = Array.isArray(facility.sports) && facility.sports[0]
-             if (!firstSport) return '🏀'
-             
-             let sportName = ''
-             
-             if (typeof firstSport === 'string') {
-               sportName = firstSport
-             } else if (firstSport.sport) {
-               if (typeof firstSport.sport === 'string') {
-                 sportName = firstSport.sport
-               } else if (firstSport.sport.name) {
-                 sportName = firstSport.sport.name
-               }
-             }
-             
-             if (sportName.includes('Badminton')) return '🏸'
-             if (sportName.includes('Tennis')) return '🎾'
-             if (sportName.includes('Basketball')) return '🏀'
-             if (sportName.includes('Soccer')) return '⚽'
-             return '🏀'
-           })()}
-         </span>
-       </div>
-      <div className="p-6">
-                 <div className="flex items-start justify-between mb-3">
-           <h3 className="text-xl font-semibold text-gray-900">{facility.name || 'Unnamed Facility'}</h3>
-           <div className="flex items-center">
-             <Star className="h-5 w-5 text-yellow-400 fill-current" />
-             <span className="ml-1 text-gray-700">{facility.rating?.average || 0}</span>
-             <span className="text-gray-500 text-sm ml-1">({facility.rating?.count || 0})</span>
-           </div>
-         </div>
-        
-                 <div className="flex items-center text-gray-600 mb-3">
-           <MapPin className="h-4 w-4 mr-2" />
-           <span className="text-sm">{facility.address?.city || 'Unknown City'} • {facility.distance || 'N/A'}</span>
-         </div>
-        
-        <div className="flex items-center justify-between mb-4">
-                     <div className="flex items-center space-x-4 text-sm text-gray-600">
-             <div className="flex items-center">
-               <Users className="h-4 w-4 mr-1" />
-               <span>{facility.totalCourts || 0} courts</span>
-             </div>
-             <div className="flex items-center">
-               <Clock className="h-4 w-4 mr-1" />
-               <span>
-                 {(() => {
-                   // Handle operating hours structure
-                   if (facility.operatingHours) {
-                     // Check if it's the new structure with day-based hours
-                     if (facility.operatingHours.monday) {
-                       return `${facility.operatingHours.monday.open || 'N/A'} - ${facility.operatingHours.monday.close || 'N/A'}`
-                     }
-                     // Check if it's the old structure with direct open/close
-                     if (facility.operatingHours.open && facility.operatingHours.close) {
-                       return `${facility.operatingHours.open} - ${facility.operatingHours.close}`
-                     }
-                   }
-                   return 'N/A - N/A'
-                 })()}
-               </span>
-             </div>
-           </div>
-           <div className="flex items-center">
-             <span className="font-medium text-green-600">
-               ₹{(() => {
-                 // Try to get hourly rate from different sources
-                 if (facility.hourlyRate && facility.hourlyRate > 0) {
-                   return facility.hourlyRate
-                 }
-                 // Try to get from sports courts
-                 if (facility.sports && facility.sports.length > 0) {
-                   const firstSport = facility.sports[0]
-                   if (firstSport.courts && firstSport.courts.length > 0) {
-                     return firstSport.courts[0].hourlyRate || 0
-                   }
-                 }
-                 return 0
-               })()}/hr
-             </span>
-           </div>
-        </div>
-        
-                 <div className="flex flex-wrap gap-2 mb-4">
-           {Array.isArray(facility.sports) && facility.sports.map((sportItem, index) => {
-             // Handle both string and object formats
-             let sportName = 'Unknown Sport'
-             
-             if (typeof sportItem === 'string') {
-               sportName = sportItem
-             } else if (sportItem.sport) {
-               // Check if sport is populated (has name) or is an ObjectId
-               if (typeof sportItem.sport === 'string') {
-                 sportName = sportItem.sport
-               } else if (sportItem.sport.name) {
-                 sportName = sportItem.sport.name
-               } else {
-                 sportName = 'Unknown Sport'
-               }
-             }
-             
-             return (
-               <span
-                 key={index}
-                 className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full"
-               >
-                 {sportName}
-               </span>
-             )
-           })}
-         </div>
+  const FilterSidebar = ({ isMobile = false }) => (
+    <div className={`bg-white ${isMobile ? 'p-4' : 'p-6'} rounded-lg shadow-sm border`}>
+      {/* Search by venue name */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Search by venue name
+        </label>
+        <input
+          type="text"
+          placeholder="Search for venues"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          {Array.isArray(facility.amenities) && facility.amenities.slice(0, 4).map((amenity, index) => {
-            // Handle both string and object formats for amenities
-            let amenityName = ''
-            if (typeof amenity === 'string') {
-              amenityName = amenity
-            } else if (amenity && typeof amenity === 'object') {
-              amenityName = amenity.name || amenity.icon || 'Unknown'
-            }
-            
-            return (
-              <div key={index} className="flex items-center text-gray-500" title={amenityName}>
-                {getAmenityIcon(amenityName)}
+      {/* Search for venues */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Search for venues"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            value={venueSearch}
+            onChange={(e) => setVenueSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Filter by sport type */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Filter by sport type
+        </label>
+        <select
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+          value={selectedSport}
+          onChange={(e) => setSelectedSport(e.target.value)}
+        >
+          <option value="">All Sport</option>
+          {sports.map((sport) => (
+            <option key={sport} value={sport}>
+              {sport}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Price range */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Price range (per hour)
+        </label>
+        <div className="px-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">₹{minPrice}.00</span>
+            <span className="text-sm text-gray-600">₹{maxPrice}.00</span>
+          </div>
+          <div className="relative">
+            <input
+              type="range"
+              min="0"
+              max="5500"
+              step="50"
+              value={minPrice}
+              onChange={(e) => setMinPrice(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #10b981 0%, #10b981 ${(minPrice/5500)*100}%, #e5e7eb ${(minPrice/5500)*100}%, #e5e7eb 100%)`
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Choose Venue Type */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Choose Venue Type
+        </label>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={venueType.indoor}
+              onChange={(e) => setVenueType(prev => ({ ...prev, indoor: e.target.checked }))}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <span className="ml-3 text-sm text-gray-700">Indoor</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={venueType.outdoor}
+              onChange={(e) => setVenueType(prev => ({ ...prev, outdoor: e.target.checked }))}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <span className="ml-3 text-sm text-gray-700">Outdoor</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Rating filters */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Rating
+        </label>
+        <div className="space-y-2">
+          {[5, 4, 3, 2, 1].map((rating) => (
+            <label key={rating} className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="rating"
+                value={rating}
+                checked={ratingFilter === rating.toString()}
+                onChange={(e) => setRatingFilter(e.target.value)}
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+              />
+              <div className="ml-3 flex items-center">
+                <div className="flex">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                    />
+                  ))}
+                </div>
+                <span className="ml-2 text-sm text-gray-700">& up</span>
               </div>
-            )
-          })}
-          {Array.isArray(facility.amenities) && facility.amenities.length > 4 && (
-            <span className="text-xs text-gray-500">+{facility.amenities.length - 4} more</span>
-          )}
+            </label>
+          ))}
         </div>
-        
-        <div className="flex gap-2">
-                     <Link
-             href={`/facilities/${facility._id || '#'}`}
-             className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md font-medium hover:bg-green-700 transition-colors text-center"
-           >
-             View Details
-           </Link>
-           <Link
-             href={`/book/${facility._id || '#'}`}
-             className="flex-1 border border-green-600 text-green-600 py-2 px-4 rounded-md font-medium hover:bg-green-50 transition-colors text-center"
-           >
-             Book Now
-           </Link>
+      </div>
+
+      {/* Clear Filters */}
+      <button
+        onClick={clearFilters}
+        className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors font-medium"
+      >
+        Clear Filters
+      </button>
+    </div>
+  )
+
+  const VenueCard = ({ facility }) => (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      {/* Image placeholder */}
+      <div className="h-48 bg-gray-100 flex items-center justify-center border-b">
+        <div className="text-center text-gray-400">
+          <div className="text-4xl mb-2">🖼️</div>
+          <span className="text-sm">Image</span>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        {/* Venue name and rating */}
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-gray-900">{facility.name}</h3>
+          <div className="flex items-center">
+            <Star className="h-4 w-4 text-yellow-400 fill-current" />
+            <span className="ml-1 text-sm text-gray-600">
+              {facility.rating.average} ({facility.rating.count})
+            </span>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-center text-gray-600 mb-2">
+          <MapPin className="h-4 w-4 mr-1 text-red-500" />
+          <span className="text-sm">{facility.location}</span>
+        </div>
+
+        {/* Price */}
+        <div className="flex items-center text-gray-600 mb-3">
+          <span className="text-sm">₹ {facility.price} per hour</span>
+        </div>
+
+        {/* Sport and type tags */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+            {facility.sport}
+          </span>
+          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+            {facility.type}
+          </span>
+        </div>
+
+        {/* Additional tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {facility.tags.map((tag, index) => (
+            <span
+              key={index}
+              className={`px-2 py-1 text-xs rounded ${
+                tag === 'Top Rated' 
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-orange-100 text-orange-800'
+              }`}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* View Details button */}
+        <Link
+          href={`/facilities/${facility._id}`}
+          className="block w-full bg-green-500 text-white text-center py-2 rounded-md hover:bg-green-600 transition-colors font-medium"
+        >
+          View Details
+        </Link>
       </div>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header />
 
-      {/* Search and Filters */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className="md:col-span-2 lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search facilities..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+      {/* Mobile filter button */}
+      <div className="lg:hidden bg-white border-b px-4 py-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900">
+            Sports Venues in Ahmedabad:<br />
+            Discover and Book Nearby Venues
+          </h1>
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </button>
+        </div>
+        
+        {/* Mobile search */}
+        <div className="mt-4 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Search for venues"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            value={venueSearch}
+            onChange={(e) => setVenueSearch(e.target.value)}
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          *clicking this will open a side panel for displaying all the same filters as in desktop
+        </p>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block">
+            <div className="sticky top-6">
+              <FilterSidebar />
             </div>
-            
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              value={selectedSport}
-              onChange={(e) => setSelectedSport(e.target.value)}
-            >
-              <option value="">All Sports</option>
-              {sports.map((sport) => (
-                <option key={sport.id} value={sport.name}>
-                  {sport.name}
-                </option>
-              ))}
-            </select>
-            
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-            >
-              <option value="">All Cities</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Bangalore">Bangalore</option>
-            </select>
-            
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              value={priceRange}
-              onChange={(e) => setPriceRange(e.target.value)}
-            >
-              <option value="">All Prices</option>
-              <option value="0-500">₹0 - ₹500</option>
-              <option value="500-1000">₹500 - ₹1000</option>
-              <option value="1000+">₹1000+</option>
-            </select>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <Grid className="h-5 w-5" />
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Desktop Title */}
+            <div className="hidden lg:block mb-6">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Sports Venues in Ahmedabad: Discover and Book Nearby Venues
+              </h1>
+            </div>
+
+            {/* Results Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-sm border overflow-hidden animate-pulse">
+                    <div className="h-48 bg-gray-200"></div>
+                    <div className="p-4">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-2 w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-3 w-1/2"></div>
+                      <div className="h-8 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {facilities.map((facility) => (
+                  <VenueCard key={facility._id} facility={facility} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            <div className="flex items-center justify-center space-x-2 mt-8">
+              <button className="w-8 h-8 flex items-center justify-center text-gray-400">
+                &lt;
               </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <List className="h-5 w-5" />
+              <button className="w-8 h-8 flex items-center justify-center bg-black text-white rounded">
+                1
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
+                2
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
+                3
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
+                4
+              </button>
+              <span className="px-2 text-gray-400">...</span>
+              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
+                11
+              </button>
+              <button className="w-8 h-8 flex items-center justify-center text-gray-400">
+                &gt;
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Sports Facilities in Mumbai ({facilities.length} results)
-          </h2>
-          <button className="flex items-center space-x-2 text-green-600 hover:text-green-700 font-medium">
-            <Filter className="h-5 w-5" />
-            <span>More Filters</span>
-          </button>
+      {/* Mobile Filter Sidebar */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setMobileFiltersOpen(false)} />
+          <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Filters</h2>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <FilterSidebar isMobile={true} />
+            </div>
+          </div>
         </div>
+      )}
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-300"></div>
-                <div className="p-6">
-                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
+      {/* Footer placeholder */}
+      <div className="bg-gray-100 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-gray-600">
+            Footer
           </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
-                         {facilities.map((facility) => (
-               <FacilityCard key={facility._id || `facility-${Math.random()}`} facility={facility} />
-             ))}
-          </div>
-        )}
-
-        {!loading && facilities.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏸</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No facilities found</h3>
-            <p className="text-gray-600">Try adjusting your search criteria</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )
