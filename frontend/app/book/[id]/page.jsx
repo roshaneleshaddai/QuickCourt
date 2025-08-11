@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Calendar, Clock, Users, CreditCard, MapPin, Star, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { facilitiesAPI } from '@/lib/api'
+import Header from '@/components/Header'
 
 export default function BookingPage() {
   const params = useParams()
@@ -151,26 +152,7 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bold text-green-600">QuickCourt</h1>
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/facilities" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Facilities
-              </Link>
-              <Link href="/bookings" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                My Bookings
-              </Link>
-              <Link href="/profile" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Profile
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}

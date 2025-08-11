@@ -5,6 +5,7 @@ import { Search, MapPin, Star, Calendar, Clock, Users, Filter } from 'lucide-rea
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { sportsAPI, facilitiesAPI } from '@/lib/api'
+import Header from '@/components/Header'
 
 export default function Home() {
   const [sports, setSports] = useState([])
@@ -58,31 +59,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-green-600">QuickCourt</h1>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/facilities" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Facilities
-              </Link>
-              <Link href="/dashboard" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                My Bookings
-              </Link>
-              <Link href="/profile" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Profile
-              </Link>
-            </nav>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login" className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-green-600 to-green-700 text-white">
@@ -115,7 +92,7 @@ export default function Home() {
                 >
                   <option value="">All Sports</option>
                   {sports.map((sport) => (
-                    <option key={sport.id} value={sport.id}>
+                    <option key={sport._id} value={sport._id}>
                       {sport.name}
                     </option>
                   ))}
@@ -151,7 +128,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {sports.map((sport) => (
               <Link
-                key={sport.id}
+                key={sport._id}
                 href={`/facilities?sport=${sport.name.toLowerCase()}`}
                 className="text-center p-6 bg-gray-50 rounded-lg hover:bg-green-50 transition-colors cursor-pointer block"
               >
@@ -183,16 +160,22 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {facilities.map((facility) => (
-              <div key={facility.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div key={facility._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                   <span className="text-6xl text-white opacity-80">
-                    {facility.sports.includes('Badminton') ? '🏸' : 
-                     facility.sports.includes('Tennis') ? '🎾' : '🏀'}
+                    {facility.sports.some(sport => 
+                      (typeof sport === 'string' && sport === 'Badminton') || 
+                      (sport.sport?.name === 'Badminton')
+                    ) ? '🏸' : 
+                     facility.sports.some(sport => 
+                       (typeof sport === 'string' && sport === 'Tennis') || 
+                       (sport.sport?.name === 'Tennis')
+                     ) ? '🎾' : '🏀'}
                   </span>
                 </div>
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <Link href={`/facilities/${facility.id}`} className="text-xl font-semibold text-gray-900 hover:text-green-600 transition-colors">
+                    <Link href={`/facilities/${facility._id}`} className="text-xl font-semibold text-gray-900 hover:text-green-600 transition-colors">
                       {facility.name}
                     </Link>
                     <div className="flex items-center">
@@ -225,13 +208,13 @@ export default function Home() {
                         key={index}
                         className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full"
                       >
-                        {sport}
+                        {typeof sport === 'string' ? sport : sport.sport?.name || 'Unknown Sport'}
                       </span>
                     ))}
                   </div>
                   
                   <Link
-                    href={`/book/${facility.id}`}
+                    href={`/book/${facility._id}`}
                     className="w-full bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 transition-colors text-center block"
                   >
                     Book Now

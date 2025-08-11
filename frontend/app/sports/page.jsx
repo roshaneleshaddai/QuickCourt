@@ -5,6 +5,7 @@ import { Search, Filter, Star } from 'lucide-react'
 import Link from 'next/link'
 import { sportsAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
+import Header from '@/components/Header'
 
 export default function SportsPage() {
   const [sports, setSports] = useState([])
@@ -48,31 +49,7 @@ export default function SportsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-green-600">QuickCourt</Link>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/facilities" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Facilities
-              </Link>
-              <Link href="/dashboard" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                My Bookings
-              </Link>
-              <Link href="/profile" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                Profile
-              </Link>
-            </nav>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login" className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
-                Sign In
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
