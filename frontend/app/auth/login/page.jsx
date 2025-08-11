@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import Header from '@/components/Header'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -42,10 +43,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Left Side - Image */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-green-700 relative overflow-hidden">
-        <Image src="/logo.jpeg" alt="Login Background" fill  />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <Header />
+      <div className="bg-gray-50 flex pt-16">
+        {/* Left Side - Image */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-green-700 relative overflow-hidden">
+          <Image src="/logo.jpeg" alt="Login Background" fill  />
       </div>
 
       {/* Right Side - Login Form */}
@@ -151,6 +154,7 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       </div>

@@ -8,137 +8,7 @@ import Image from 'next/image'
 import { sportsAPI, facilitiesAPI } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 
-// Custom Header Component for this page
-function CustomHeader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { user, isAuthenticated, logout } = useAuth()
-
-  return (
-    <header className="bg-white shadow-sm border-b relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-green-600"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-green-600">QUICKCOURT</h1>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link href="/facilities" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-              Facilities
-            </Link>
-            <Link href="/sports" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-              Sports
-            </Link>
-            {isAuthenticated && (
-              <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Dashboard
-                </Link>
-                <Link href="/profile" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium">
-                  Profile
-                </Link>
-              </>
-            )}
-          </nav>
-
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/facilities"
-                  className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                >
-                  Book
-                </Link>
-                <span className="text-gray-700 text-sm">Hi, {user?.firstName || 'User'}</span>
-                <button
-                  onClick={logout}
-                  className="text-gray-600 hover:text-red-600 text-sm"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/facilities"
-                  className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                >
-                  Book
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="text-gray-700 hover:text-green-600 text-sm"
-                >
-                  Login
-                </Link>
-                <span className="text-gray-400">/</span>
-                <Link
-                  href="/auth/register"
-                  className="text-gray-700 hover:text-green-600 text-sm"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Auth */}
-          <div className="md:hidden">
-            {isAuthenticated ? (
-              <span className="text-sm text-gray-600">Hi, {user?.firstName || 'User'}</span>
-            ) : (
-              <Link href="/auth/login" className="text-green-600 text-sm font-medium">
-                Login
-              </Link>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-            <div className="px-4 py-2 space-y-1">
-              <Link href="/facilities" className="block px-3 py-2 text-gray-700 hover:text-green-600">
-                Facilities
-              </Link>
-              <Link href="/sports" className="block px-3 py-2 text-gray-700 hover:text-green-600">
-                Sports
-              </Link>
-              {isAuthenticated ? (
-                <>
-                  <Link href="/dashboard" className="block px-3 py-2 text-gray-700 hover:text-green-600">
-                    Dashboard
-                  </Link>
-                  <Link href="/profile" className="block px-3 py-2 text-gray-700 hover:text-green-600">
-                    Profile
-                  </Link>
-                  <button onClick={logout} className="block w-full text-left px-3 py-2 text-gray-700 hover:text-red-600">
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link href="/auth/register" className="block px-3 py-2 text-gray-700 hover:text-green-600">
-                  Sign Up
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </header>
-  )
-}
+import Header from '@/components/Header'
 
 export default function Home() {
   const [sports, setSports] = useState([])
@@ -146,7 +16,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSport, setSelectedSport] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
+  const [selectedCity, setSelectedCity] = useState('Ahmedabad')
 
   // Horizontal scrollers
   const facilityScrollRef = useRef(null)
@@ -157,55 +27,37 @@ export default function Home() {
     ref.current.scrollBy({ left: amount, behavior: 'smooth' })
   }
 
-  // City suggestions for quick selection (India)
+  // City suggestions
   const citySuggestions = [
     'Ahmedabad', 'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune',
-    'Kolkata', 'Jaipur', 'Surat', 'Lucknow', 'Indore', 'Bhopal', 'Nagpur',
-    'Coimbatore', 'Kochi', 'Chandigarh', 'Noida', 'Gurugram', 'Thane'
+    'Kolkata', 'Jaipur', 'Surat', 'Lucknow', 'Indore', 'Bhopal', 'Nagpur'
   ]
 
-  // Sports data with images and emoji fallbacks
-  const sportsData = {
-    'Badminton': { 
-      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop',
-      emoji: '🏸',
-      gradient: 'from-orange-400 to-orange-600'
-    },
-    'Football': { 
-      image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&h=200&fit=crop',
-      emoji: '⚽',
-      gradient: 'from-green-400 to-green-600'
-    },
-    'Cricket': { 
-      image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=200&h=200&fit=crop',
-      emoji: '🏏',
-      gradient: 'from-blue-400 to-blue-600'
-    },
-    'Swimming': { 
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&h=200&fit=crop',
-      emoji: '🏊‍♂️',
-      gradient: 'from-cyan-400 to-cyan-600'
-    },
-    'Tennis': { 
-      image: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=200&h=200&fit=crop',
-      emoji: '🎾',
-      gradient: 'from-yellow-400 to-yellow-600'
-    },
-    'Table Tennis': { 
-      image: 'https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=200&h=200&fit=crop',
-      emoji: '🏓',
-      gradient: 'from-red-400 to-red-600'
-    },
-    'Basketball': { 
-      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=200&h=200&fit=crop',
-      emoji: '🏀',
-      gradient: 'from-orange-400 to-orange-600'
-    },
-    'Volleyball': {
-      image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=200&h=200&fit=crop',
-      emoji: '🏐',
-      gradient: 'from-purple-400 to-purple-600'
-    }
+  // Genre color mapping
+  const getGenreClass = (sportName) => {
+    const name = sportName?.toLowerCase() || ''
+    if (name.includes('badminton')) return 'genre-badminton'
+    if (name.includes('football') || name.includes('soccer')) return 'genre-football'
+    if (name.includes('cricket')) return 'genre-cricket'
+    if (name.includes('swimming')) return 'genre-swimming'
+    if (name.includes('tennis') && !name.includes('table')) return 'genre-tennis'
+    if (name.includes('table tennis') || name.includes('ping pong')) return 'genre-table-tennis'
+    if (name.includes('basketball')) return 'genre-basketball'
+    if (name.includes('volleyball')) return 'genre-volleyball'
+    return 'genre-default'
+  }
+
+  const getTagClass = (sportName) => {
+    const name = sportName?.toLowerCase() || ''
+    if (name.includes('badminton')) return 'tag-badminton'
+    if (name.includes('football') || name.includes('soccer')) return 'tag-football'
+    if (name.includes('cricket')) return 'tag-cricket'
+    if (name.includes('swimming')) return 'tag-swimming'
+    if (name.includes('tennis') && !name.includes('table')) return 'tag-tennis'
+    if (name.includes('table tennis') || name.includes('ping pong')) return 'tag-table-tennis'
+    if (name.includes('basketball')) return 'tag-basketball'
+    if (name.includes('volleyball')) return 'tag-volleyball'
+    return 'bg-gray-500 text-white'
   }
 
   useEffect(() => {
@@ -234,7 +86,6 @@ export default function Home() {
       toast.error('Please enter search criteria')
       return
     }
-    // Navigate to facilities with search params
     const params = new URLSearchParams()
     if (searchTerm) params.set('search', searchTerm)
     if (selectedSport) params.set('sport', selectedSport)
@@ -244,47 +95,64 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-green-600 rounded-full animate-ping"></div>
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Loading amazing experiences...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Custom Header */}
-      <CustomHeader />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header */}
+      <Header />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[500px] py-12">
-            {/* Left: Content */}
-            <div>
-              <div className="flex items-center mb-6">
-                <MapPin className="h-6 w-6 mr-3 text-green-200" />
-                <span className="text-lg text-green-100">Ahmedabad</span>
-              </div>
-              
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                FIND PLAYERS & VENUES<br />
-                <span className="text-green-200">NEARBY</span>
-              </h1>
-              
-              <p className="text-lg md:text-xl text-green-100 mb-8 max-w-lg">
-                Seamlessly explore sports venues and play with sports enthusiasts just like you!
-              </p>
+      {/* Hero Section - Centered Layout */}
+      <section className="bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-purple-50/30"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
+          <div className="content-center min-h-[60vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+              {/* Left Column - Content */}
+              <div className="space-y-8 text-center lg:text-left">
+                {/* Location with animation */}
+                <div className="flex items-center justify-center lg:justify-start space-x-3 text-gray-600">
+                  <MapPin className="h-6 w-6 text-blue-500 pulse-animation" />
+                  <span className="font-medium text-lg">{selectedCity}</span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full pulse-animation"></span>
+                </div>
 
-              {/* Search Form */}
-              <div className="bg-white rounded-xl p-6 max-w-md">
+                {/* Main Heading with gradient */}
                 <div className="space-y-4">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                    <span className="bg-gradient-to-r from-gray-900 via-green-700 to-green-800 bg-clip-text text-transparent">
+                      FIND PLAYERS & VENUES
+                    </span>
+                    <br />
+                    <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent float-animation">
+                      NEARBY
+                    </span>
+                  </h1>
+                  <p className="text-gray-600 text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                    Seamlessly explore <span className="font-semibold text-green-600">premium sports venues</span> and connect with 
+                    <span className="font-semibold text-green-700"> passionate athletes</span> just like you!
+                  </p>
+                </div>
+
+                {/* Mobile Search Form */}
+                <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-6 space-y-4 shadow-lg animate-lift">
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 h-5 w-5" />
                     <input
                       type="text"
                       list="city-suggestions"
                       placeholder="Ahmedabad"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 transition-all"
                       value={selectedCity}
                       onChange={(e) => setSelectedCity(e.target.value)}
                     />
@@ -296,11 +164,11 @@ export default function Home() {
                   </div>
                   
                   <select
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 transition-all"
                     value={selectedSport}
                     onChange={(e) => setSelectedSport(e.target.value)}
                   >
-                    <option value="">Select Sport</option>
+                    <option value="">All Sports</option>
                     {sports.map((sport) => (
                       <option key={sport._id} value={sport._id}>
                         {sport.name}
@@ -310,24 +178,68 @@ export default function Home() {
                   
                   <button
                     onClick={handleSearch}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
+                    className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-lg"
                   >
-                    <Search className="h-5 w-5 mr-2" />
-                    Search
+                    <Search className="h-5 w-5 mr-2 inline" />
+                    Discover Amazing Venues
                   </button>
+                </div>
+              </div>
+
+              {/* Right Column - Hero Image (Desktop Only) */}
+              <div className="hidden lg:block">
+                <div className="relative w-full h-96 animate-hover">
+                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center border-2 border-dashed border-blue-300 float-animation">
+                    <div className="text-center text-blue-600">
+                      <div className="text-8xl mb-6">🖼️</div>
+                      <p className="text-2xl font-bold mb-2">Hero Image</p>
+                      <p className="text-lg opacity-75">Insert your amazing hero visual here</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: Hero Image (Desktop only) */}
-            <div className="hidden lg:block">
-              <div className="relative h-96">
-                <div className="w-full h-full bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-8xl mb-4">🏸</div>
-                    <p className="text-xl text-white/80">Sports & Recreation</p>
-                  </div>
+            {/* Desktop Search Bar - Fixed Position */}
+            <div className="hidden lg:block mt-16 w-full max-w-4xl mx-auto">
+              <div className="bg-white/95 backdrop-blur-sm border border-green-200 rounded-3xl p-4 flex items-center gap-4 shadow-2xl animate-lift">
+                <div className="flex-1 relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 h-6 w-6 pulse-animation" />
+                  <input
+                    type="text"
+                    list="city-suggestions-desktop"
+                    placeholder="Search your city..."
+                    className="w-full pl-14 pr-6 py-5 border-0 focus:ring-0 text-gray-900 placeholder-gray-500 rounded-2xl bg-green-50/50 focus:bg-white transition-all text-lg font-medium"
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                  />
+                  <datalist id="city-suggestions-desktop">
+                    {citySuggestions.map((city) => (
+                      <option key={city} value={city} />
+                    ))}
+                  </datalist>
                 </div>
+                
+                <select
+                  className="px-6 py-5 border-0 focus:ring-0 text-gray-900 bg-green-50 rounded-2xl font-semibold text-lg min-w-[180px] focus:bg-green-100 transition-all"
+                  value={selectedSport}
+                  onChange={(e) => setSelectedSport(e.target.value)}
+                >
+                  <option value="">🏆 All Sports</option>
+                  {sports.map((sport) => (
+                    <option key={sport._id} value={sport._id}>
+                      {sport.name}
+                    </option>
+                  ))}
+                </select>
+                
+                <button
+                  onClick={handleSearch}
+                  className="bg-gradient-to-r from-green-600 to-green-500 text-white px-10 py-5 rounded-2xl font-bold hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-xl text-lg"
+                >
+                  <Search className="h-6 w-6 mr-3 inline" />
+                  Search
+                </button>
               </div>
             </div>
           </div>
@@ -335,218 +247,231 @@ export default function Home() {
       </section>
 
       {/* Book Venues Section */}
-      <section className="py-12 bg-white">
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Book Venues</h2>
-            <Link href="/facilities" className="text-green-600 hover:text-green-700 font-semibold text-lg">
-              See all venues &gt;
-            </Link>
-          </div>
+          <div className="content-center">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-10 w-full">
+              <div className="text-center md:text-left mb-4 md:mb-0">
+                <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-green-700 bg-clip-text text-transparent">
+                  Book Venues
+                </h2>
+                <p className="text-gray-600 mt-2">Discover amazing sports facilities</p>
+              </div>
+              <Link href="/facilities" className="text-green-600 hover:text-green-700 font-semibold text-lg animate-lift px-4 py-2 rounded-full hover:bg-green-50 transition-all">
+                See all venues →
+              </Link>
+            </div>
 
-          <div className="relative">
-            {/* Desktop Navigation Arrows */}
-            <button
-              onClick={() => scrollByAmount(facilityScrollRef, -400)}
-              className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 text-gray-600 hover:text-green-600 transition-all"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={() => scrollByAmount(facilityScrollRef, 400)}
-              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 text-gray-600 hover:text-green-600 transition-all"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
+            <div className="relative w-full">
+              {/* Desktop Navigation Arrows */}
+              <button
+                onClick={() => scrollByAmount(facilityScrollRef, -400)}
+                className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:text-green-600 transition-all animate-scale"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => scrollByAmount(facilityScrollRef, 400)}
+                className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-600 hover:text-green-600 transition-all animate-scale"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
 
-            {/* Scrollable Venues */}
-            <div
-              ref={facilityScrollRef}
-              className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4 lg:px-12"
-            >
-              {facilities.map((facility) => (
-                <div key={facility._id} className="min-w-[280px] md:min-w-[320px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow snap-start border border-gray-100">
-                  {/* Venue Image */}
-                  <div className="h-48 bg-gradient-to-br from-green-400 to-green-600 rounded-t-xl flex items-center justify-center relative overflow-hidden">
-                    <span className="text-6xl text-white/80">
-                      {facility.sports.some(sport => 
-                        (typeof sport === 'string' && sport === 'Badminton') || 
-                        (sport.sport?.name === 'Badminton')
-                      ) ? '🏸' : 
-                        facility.sports.some(sport => 
-                          (typeof sport === 'string' && sport === 'Tennis') || 
-                          (sport.sport?.name === 'Tennis')
-                        ) ? '🎾' : '🏀'}
-                    </span>
-                    {/* Rating Badge */}
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
-                      <span className="text-sm font-semibold text-gray-800">
-                        {facility.rating?.average || '4.5'}
-                      </span>
+              {/* Venue Cards */}
+              <div
+                ref={facilityScrollRef}
+                className="responsive-grid lg:flex lg:gap-6 lg:overflow-x-auto lg:no-scrollbar lg:snap-x lg:snap-mandatory lg:pb-4 lg:px-12"
+              >
+                {facilities.map((facility) => {
+                  const primarySport = facility.sports?.[0] || 'default'
+                  const sportName = typeof primarySport === 'string' ? primarySport : primarySport.sport?.name || 'default'
+                  
+                  return (
+                    <div key={facility._id} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start">
+                      {/* Genre-colored Image Placeholder */}
+                      <div className={`h-48 ${getGenreClass(sportName)} flex items-center justify-center relative`}>
+                        <div className="text-center text-white">
+                          <div className="text-6xl mb-2 float-animation">🖼️</div>
+                          <p className="font-bold">Venue Image</p>
+                          <p className="text-sm opacity-90">{sportName} Facility</p>
+                        </div>
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                          <div className="flex items-center text-white">
+                            <Star className="h-4 w-4 fill-current mr-1" />
+                            <span className="font-bold text-sm">{facility.rating?.average || '4.8'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Venue Info */}
+                      <div className="p-6">
+                        <div className="mb-4">
+                                                  <h3 className="font-bold text-xl text-gray-900 mb-2 hover:text-green-600 transition-colors">
+                          {facility.name || 'Premium Sports Complex'}
+                        </h3>
+                        <div className="flex items-center text-gray-600 text-sm">
+                          <MapPin className="h-4 w-4 mr-1 text-green-500" />
+                            <span>{facility.address?.city || 'Elite Sports District'}</span>
+                          </div>
+                        </div>
+
+                        {/* Genre-based Tags */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className={`px-3 py-1 text-xs rounded-full font-semibold ${getTagClass(sportName)}`}>
+                            {sportName}
+                          </span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
+                            Premium
+                          </span>
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs rounded-full font-semibold">
+                            Top Rated
+                          </span>
+                        </div>
+
+                        {/* Book Button with genre colors */}
+                        <Link
+                          href={`/book/${facility._id}`}
+                          className={`block w-full ${getGenreClass(sportName)} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
+                        >
+                          Book Now - ₹{facility.hourlyRate || '500'}/hr
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                  {/* Venue Details */}
-                  <div className="p-6">
-                    <div className="mb-3">
-                      <Link href={`/facilities/${facility._id}`} className="text-xl font-bold text-gray-900 hover:text-green-600 transition-colors line-clamp-2">
-                        {facility.name}
-                      </Link>
+      {/* Enhanced Popular Sports Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-white/50"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="content-center">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent mb-6">
+                🏆 Popular Sports
+              </h2>
+              <p className="text-gray-700 text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
+                Discover your passion with our <span className="font-semibold text-green-600">premium sports collection</span>. 
+                Find venues, connect with players, and elevate your game!
+              </p>
+              <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-green-400 mx-auto rounded-full"></div>
+            </div>
+
+            {/* Enhanced Sports Grid */}
+            <div className="sports-grid">
+              {(sports.length > 0 ? sports : [
+                { _id: 1, name: 'Badminton', emoji: '🏸', venues: '120+' },
+                { _id: 2, name: 'Football', emoji: '⚽', venues: '95+' },
+                { _id: 3, name: 'Cricket', emoji: '🏏', venues: '80+' },
+                { _id: 4, name: 'Swimming', emoji: '🏊‍♂️', venues: '45+' },
+                { _id: 5, name: 'Tennis', emoji: '🎾', venues: '65+' },
+                { _id: 6, name: 'Table Tennis', emoji: '🏓', venues: '75+' },
+                { _id: 7, name: 'Basketball', emoji: '🏀', venues: '50+' },
+                { _id: 8, name: 'Volleyball', emoji: '🏐', venues: '35+' }
+              ]).map((sport, index) => (
+                <Link
+                  key={sport._id}
+                  href={`/facilities?sport=${sport.name.toLowerCase()}`}
+                  className="sport-card rounded-3xl p-6 group border border-green-100 hover:border-green-300 transition-all duration-500"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="sport-card-content">
+                    {/* Sport Icon with Green Background */}
+                    <div className={`w-20 h-20 ${getGenreClass(sport.name)} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500`}>
+                      <span className="text-4xl">{sport.emoji || '🖼️'}</span>
                     </div>
                     
-                    <div className="flex items-center text-gray-600 mb-4">
-                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span className="text-sm truncate">{facility.address?.city}, {facility.address?.state}</span>
-                    </div>
-
-                    {/* Sports Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {facility.sports.slice(0, 3).map((sport, index) => (
-                        <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
-                          {typeof sport === 'string' ? sport : sport.sport?.name || 'Sport'}
-                        </span>
-                      ))}
-                      {facility.sports.length > 3 && (
-                        <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
-                          +{facility.sports.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price and Book Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold text-green-600">
-                        ₹{facility.hourlyRate || '500'}/hr
+                    {/* Sport Info */}
+                    <div className="text-center">
+                      <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-green-600 transition-colors duration-300">
+                        {sport.name}
+                      </h3>
+                      <p className="text-green-600 font-semibold text-sm mb-3">{sport.venues || '50+'} Venues</p>
+                      <p className="text-gray-500 text-sm mb-4">Find courts & connect with players</p>
+                      
+                      {/* Interactive Button */}
+                      <div className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-2 rounded-full text-sm font-medium group-hover:from-green-600 group-hover:to-green-500 transition-all duration-300 inline-flex items-center">
+                        Explore
+                        <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
                       </div>
-                      <Link 
-                        href={`/book/${facility._id}`}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                      >
-                        Book Now
-                      </Link>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Sports Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Popular Sports</h2>
-
-          <div className="relative">
-            {/* Desktop Navigation Arrows */}
-            <button
-              onClick={() => scrollByAmount(sportsScrollRef, -400)}
-              className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 text-gray-600 hover:text-green-600 transition-all"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={() => scrollByAmount(sportsScrollRef, 400)}
-              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 text-gray-600 hover:text-green-600 transition-all"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-
-            {/* Scrollable Sports */}
-            <div 
-              ref={sportsScrollRef}
-              className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4 lg:px-12"
-            >
-              {sports.map((sport) => {
-                const sportInfo = sportsData[sport.name] || { 
-                  emoji: sport.icon || '🏀', 
-                  gradient: 'from-green-400 to-green-600' 
-                }
-                
-                return (
-                  <Link
-                    key={sport._id}
-                    href={`/facilities?sport=${sport.name.toLowerCase()}`}
-                    className="min-w-[140px] md:min-w-[160px] bg-white rounded-xl shadow-md hover:shadow-lg transition-all snap-start border border-gray-100 overflow-hidden group"
-                  >
-                    <div className="h-32 md:h-36 relative overflow-hidden">
-                      {sportInfo.image ? (
-                        <>
-          <Image
-                            src={sportInfo.image}
-                            alt={sport.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              // Fallback to gradient background if image fails to load
-                              e.target.style.display = 'none'
-                              e.target.nextSibling.style.display = 'flex'
-                            }}
-                          />
-                          <div className={`h-full bg-gradient-to-br ${sportInfo.gradient} items-center justify-center hidden`}>
-                            <span className="text-4xl text-white/80">{sportInfo.emoji}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className={`h-full bg-gradient-to-br ${sportInfo.gradient} flex items-center justify-center`}>
-                          <span className="text-4xl text-white/80">{sportInfo.emoji}</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                        <div className="text-white font-semibold text-sm md:text-base">{sport.name}</div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
+            
+            {/* Call-to-Action */}
+            <div className="mt-16 text-center">
+              <Link 
+                href="/facilities" 
+                className="inline-flex items-center bg-gradient-to-r from-green-600 to-green-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-xl"
+              >
+                <span className="mr-3">🚀</span>
+                Explore All Sports Venues
+                <span className="ml-3">→</span>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="text-xl font-bold text-green-400 mb-4">QUICKCOURT</h4>
-              <p className="text-gray-400">
-                Your one-stop solution for sports facility booking and finding playing partners.
+      {/* Enhanced Green Footer */}
+      <footer className="bg-gradient-to-br from-gray-900 via-green-900 to-gray-800 text-white py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-900/20 to-transparent"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="content-center">
+            <div className="text-center mb-12">
+              <h3 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-green-200 bg-clip-text text-transparent mb-6">
+                🚀 Ready to Play?
+              </h3>
+              <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed">
+                Join thousands of athletes who have found their perfect sports venues through 
+                <span className="font-semibold text-green-400"> QuickCourt</span>
               </p>
             </div>
-            <div>
-              <h5 className="font-semibold mb-4">Quick Links</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/facilities" className="hover:text-white transition-colors">Facilities</Link></li>
-                <li><Link href="/sports" className="hover:text-white transition-colors">Sports</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
-              </ul>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-12">
+              <div className="animate-lift">
+                <div className="text-4xl font-bold text-green-400 mb-2">500+</div>
+                <div className="text-gray-300 text-lg">Premium Venues</div>
+              </div>
+              <div className="animate-lift">
+                <div className="text-4xl font-bold text-emerald-400 mb-2">10K+</div>
+                <div className="text-gray-300 text-lg">Active Players</div>
+              </div>
+              <div className="animate-lift">
+                <div className="text-4xl font-bold text-teal-400 mb-2">50+</div>
+                <div className="text-gray-300 text-lg">Sports Available</div>
+              </div>
+              <div className="animate-lift">
+                <div className="text-4xl font-bold text-yellow-400 mb-2">4.8★</div>
+                <div className="text-gray-300 text-lg">User Rating</div>
+              </div>
             </div>
-            <div>
-              <h5 className="font-semibold mb-4">Support</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="#" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Booking Guide</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Cancellation Policy</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">FAQ</Link></li>
-              </ul>
+
+            {/* Call to Action */}
+            <div className="text-center mb-12">
+              <Link 
+                href="/facilities"
+                className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-400 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-green-600 hover:to-green-500 transition-all animate-button shadow-2xl"
+              >
+                <span className="mr-3">🏆</span>
+                Start Playing Today
+                <span className="ml-3">→</span>
+              </Link>
             </div>
-            <div>
-              <h5 className="font-semibold mb-4">Connect</h5>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="#" className="hover:text-white transition-colors">Facebook</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Twitter</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Instagram</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">LinkedIn</Link></li>
-              </ul>
+            
+            <div className="pt-8 border-t border-green-700/30 text-center">
+              <p className="text-gray-400 text-lg">
+                &copy; 2025 QuickCourt. Made with 
+                <span className="text-green-400 mx-1">💚</span> 
+                for sports enthusiasts.
+              </p>
             </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 QuickCourt. All rights reserved.</p>
           </div>
         </div>
       </footer>
