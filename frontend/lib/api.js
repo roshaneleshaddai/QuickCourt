@@ -68,6 +68,12 @@ async function apiCall(endpoint, options = {}) {
         errorData,
         errorMessage,
       });
+      throw new Error(
+        errorData.message ||
+          errorData.error ||
+          errorData.details ||
+          `HTTP error! status: ${response.status}`
+      );
 
       throw new Error(errorMessage);
     }
@@ -361,6 +367,37 @@ export const facilityOwnerAPI = {
         method: "DELETE",
       }
     ),
+};
+
+// Reviews API calls
+export const reviewsAPI = {
+  // Get all reviews for a facility
+  getFacilityReviews: (facilityId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/reviews/facility/${facilityId}?${queryString}`);
+  },
+
+  // Create a new review
+  create: (reviewData) => {
+    console.log('🚀 reviewsAPI.create called with:', reviewData);
+    return apiCall("/reviews", {
+      method: "POST",
+      body: JSON.stringify(reviewData),
+    });
+  },
+
+  // Update user's own review
+  update: (id, updateData) =>
+    apiCall(`/reviews/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    }),
+
+  // Delete user's own review
+  delete: (id) =>
+    apiCall(`/reviews/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 // Health check

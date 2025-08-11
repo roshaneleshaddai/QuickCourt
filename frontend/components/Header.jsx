@@ -49,7 +49,12 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-3">
-                <span className="text-gray-700 text-sm font-medium">Hi, {user?.firstName || 'User'}</span>
+                <Link 
+                  href="/dashboard" 
+                  className="text-gray-700 hover:text-green-600 text-sm font-medium transition-colors cursor-pointer animate-scale"
+                >
+                  Hi, {user?.firstName || 'User'}
+                </Link>
                 <button onClick={handleLogout} className="text-gray-600 hover:text-red-600 text-sm animate-scale">
                   Logout
                 </button>
@@ -71,7 +76,12 @@ export default function Header() {
           {/* Mobile Actions */}
           <div className="md:hidden">
             {isAuthenticated ? (
-              <span className="text-sm text-gray-600">Hi, {user?.firstName || 'User'}</span>
+              <Link 
+                href="/dashboard" 
+                className="text-sm text-gray-600 hover:text-green-600 transition-colors animate-scale"
+              >
+                Hi, {user?.firstName || 'User'}
+              </Link>
             ) : (
               <Link href="/auth/login" className="text-green-600 text-sm font-medium animate-scale">
                 Login
