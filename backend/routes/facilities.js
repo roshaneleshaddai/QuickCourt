@@ -489,8 +489,13 @@ router.get("/facility-owner/dashboard/stats", [auth], async (req, res) => {
 // @access  Private (Facility owners only)
 router.get("/facility-owner/bookings", [auth], async (req, res) => {
   try {
+    console.log("GET /facilities/facility-owner/bookings called");
+    console.log("User:", req.user);
+    console.log("User role:", req.user.role);
+
     // Check if user is a facility owner
     if (req.user.role !== "facility_owner") {
+      console.log("Access denied: User is not a facility owner");
       return res
         .status(403)
         .json({ error: "Access denied. Facility owners only." });
@@ -501,15 +506,36 @@ router.get("/facility-owner/bookings", [auth], async (req, res) => {
 
     // Get all facilities owned by the user
     const userFacilities = await Facility.find({ owner: req.user._id });
+    console.log("User facilities found:", userFacilities.length);
+    console.log(
+      "User facilities:",
+      userFacilities.map((f) => ({ id: f._id, name: f.name }))
+    );
+
     const facilityIds = userFacilities.map((f) => f._id);
+    console.log("Facility IDs:", facilityIds);
 
     // Build filter
     const filter = { facility: { $in: facilityIds } };
-    if (status) {
+    if (status && status !== "undefined") {
       filter.status = status;
     }
 
     // Get bookings with pagination
+    console.log("Filter for bookings:", filter);
+
+    // First, let's check if there are any bookings at all in the database
+    const allBookings = await Booking.find({});
+    console.log("Total bookings in database:", allBookings.length);
+    if (allBookings.length > 0) {
+      console.log("Sample booking:", {
+        id: allBookings[0]._id,
+        facility: allBookings[0].facility,
+        status: allBookings[0].status,
+        date: allBookings[0].date,
+      });
+    }
+
     const bookings = await Booking.find(filter)
       .populate("user", "firstName lastName email")
       .populate("facility", "name address")
@@ -518,8 +544,20 @@ router.get("/facility-owner/bookings", [auth], async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+    console.log("Bookings found:", bookings.length);
+    console.log(
+      "Bookings:",
+      bookings.map((b) => ({
+        id: b._id,
+        facility: b.facility?.name,
+        court: b.court?.name,
+        user: b.user?.firstName,
+      }))
+    );
+
     // Get total count
     const total = await Booking.countDocuments(filter);
+    console.log("Total bookings count:", total);
 
     res.json({
       bookings,
