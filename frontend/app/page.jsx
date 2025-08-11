@@ -14,6 +14,7 @@ export default function Home() {
   const [sports, setSports] = useState([])
   const [facilities, setFacilities] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSport, setSelectedSport] = useState('')
   const [selectedCity, setSelectedCity] = useState('Ahmedabad')
@@ -63,16 +64,87 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
+        setError(null)
+        
+        console.log('Starting to fetch data from API...')
+        
+        // Fetch sports and facilities from the database
         const [sportsData, facilitiesData] = await Promise.all([
           sportsAPI.getAll({ limit: 8 }),
-          facilitiesAPI.getAll({ limit: 6 })
+          facilitiesAPI.getAll({ 
+            limit: 6, 
+            page: 1
+          })
         ])
         
-        setSports(sportsData.sports || [])
-        setFacilities(facilitiesData.facilities || [])
+        console.log('Sports API response:', sportsData)
+        console.log('Facilities API response:', facilitiesData)
+        
+        // Set sports data
+        if (sportsData && sportsData.sports) {
+          setSports(sportsData.sports)
+          console.log('Sports set successfully:', sportsData.sports.length)
+        } else {
+          console.warn('No sports data received')
+          setSports([])
+        }
+        
+        // Process and set facilities data
+        if (facilitiesData && facilitiesData.facilities && Array.isArray(facilitiesData.facilities)) {
+          console.log('Processing facilities data:', facilitiesData.facilities.length, 'facilities')
+          
+          // Transform the data to match the expected structure
+          const processedFacilities = facilitiesData.facilities.map(facility => {
+            console.log('Processing facility:', facility.name, facility)
+            
+            // Extract sport information properly
+            let primarySport = 'General Sports'
+            if (facility.sports && facility.sports.length > 0) {
+              const firstSport = facility.sports[0]
+              if (firstSport.sport && firstSport.sport.name) {
+                primarySport = firstSport.sport.name
+              } else if (typeof firstSport === 'string') {
+                primarySport = firstSport
+              }
+            }
+            
+            return {
+              ...facility,
+              // Ensure required fields have fallback values
+              name: facility.name || 'Premium Sports Complex',
+              rating: {
+                average: facility.rating?.average || 4.5,
+                count: facility.rating?.count || 0
+              },
+              address: {
+                city: facility.address?.city || 'Ahmedabad',
+                street: facility.address?.street || '',
+                state: facility.address?.state || '',
+                zipCode: facility.address?.zipCode || ''
+              },
+              hourlyRate: facility.hourlyRate || 500,
+              // Ensure sports array is properly structured
+              sports: Array.isArray(facility.sports) ? facility.sports : [],
+              // Store the extracted primary sport for easy access
+              primarySport: primarySport
+            }
+          })
+          
+          console.log('Processed facilities:', processedFacilities)
+          setFacilities(processedFacilities)
+        } else {
+          console.warn('No facilities data received or invalid format:', facilitiesData)
+          setFacilities([])
+        }
+        
       } catch (error) {
         console.error('Error fetching data:', error)
-        toast.error('Failed to load data')
+        setError(error.message || 'Failed to load data')
+        toast.error('Failed to load data. Please try again later.')
+        // Set empty arrays on error to prevent crashes
+        setSports([])
+        setFacilities([])
       } finally {
         setLoading(false)
       }
@@ -80,6 +152,13 @@ export default function Home() {
     
     fetchData()
   }, [])
+
+  const retryFetch = () => {
+    setError(null)
+    setLoading(true)
+    // Trigger the useEffect again by updating a dependency
+    window.location.reload()
+  }
 
   const handleSearch = () => {
     if (!searchTerm && !selectedSport && !selectedCity) {
@@ -282,63 +361,113 @@ export default function Home() {
                 ref={facilityScrollRef}
                 className="responsive-grid lg:flex lg:gap-6 lg:overflow-x-auto lg:no-scrollbar lg:snap-x lg:snap-mandatory lg:pb-4 lg:px-12"
               >
-                {facilities.map((facility) => {
-                  const primarySport = facility.sports?.[0] || 'default'
-                  const sportName = typeof primarySport === 'string' ? primarySport : primarySport.sport?.name || 'default'
-                  
-                  return (
-                    <div key={facility._id} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start">
-                      {/* Genre-colored Image Placeholder */}
-                      <div className={`h-48 ${getGenreClass(sportName)} flex items-center justify-center relative`}>
-                        <div className="text-center text-white">
-                          <div className="text-6xl mb-2 float-animation">🖼️</div>
-                          <p className="font-bold">Venue Image</p>
-                          <p className="text-sm opacity-90">{sportName} Facility</p>
-                        </div>
-                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                          <div className="flex items-center text-white">
-                            <Star className="h-4 w-4 fill-current mr-1" />
-                            <span className="font-bold text-sm">{facility.rating?.average || '4.8'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Venue Info */}
+                {loading ? (
+                  // Loading skeleton for facilities
+                  Array.from({ length: 6 }, (_, i) => (
+                    <div key={i} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-pulse">
+                      <div className="h-48 bg-gray-200"></div>
                       <div className="p-6">
-                        <div className="mb-4">
-                                                  <h3 className="font-bold text-xl text-gray-900 mb-2 hover:text-green-600 transition-colors">
-                          {facility.name || 'Premium Sports Complex'}
-                        </h3>
-                        <div className="flex items-center text-gray-600 text-sm">
-                          <MapPin className="h-4 w-4 mr-1 text-green-500" />
-                            <span>{facility.address?.city || 'Elite Sports District'}</span>
-                          </div>
-                        </div>
-
-                        {/* Genre-based Tags */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <span className={`px-3 py-1 text-xs rounded-full font-semibold ${getTagClass(sportName)}`}>
-                            {sportName}
-                          </span>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
-                            Premium
-                          </span>
-                          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs rounded-full font-semibold">
-                            Top Rated
-                          </span>
-                        </div>
-
-                        {/* Book Button with genre colors */}
-                        <Link
-                          href={`/book/${facility._id}`}
-                          className={`block w-full ${getGenreClass(sportName)} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
-                        >
-                          Book Now - ₹{facility.hourlyRate || '500'}/hr
-                        </Link>
+                        <div className="h-6 bg-gray-200 rounded mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-4 w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
+                        <div className="h-12 bg-gray-200 rounded"></div>
                       </div>
                     </div>
-                  )
-                })}
+                  ))
+                ) : facilities.length > 0 ? (
+                  facilities.map((facility) => {
+                    // Use the processed primary sport from the data
+                    const sportName = facility.primarySport || 'General Sports'
+                    
+                    console.log('Rendering facility:', facility.name, 'with sport:', sportName)
+                    
+                    return (
+                      <div key={facility._id} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start">
+                        {/* Genre-colored Image Placeholder */}
+                        <div className={`h-48 ${getGenreClass(sportName)} flex items-center justify-center relative`}>
+                          <div className="text-center text-white">
+                            <div className="text-6xl mb-2 float-animation">🖼️</div>
+                            <p className="font-bold">Venue Image</p>
+                            <p className="text-sm opacity-90">{sportName} Facility</p>
+                          </div>
+                          <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                            <div className="flex items-center text-white">
+                              <Star className="h-4 w-4 fill-current mr-1" />
+                              <span className="font-bold text-sm">{facility.rating?.average || '4.8'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Venue Info */}
+                        <div className="p-6">
+                          <div className="mb-4">
+                            <h3 className="font-bold text-xl text-gray-900 mb-2 hover:text-green-600 transition-colors">
+                              {facility.name}
+                            </h3>
+                            <div className="flex items-center text-gray-600 text-sm">
+                              <MapPin className="h-4 w-4 mr-1 text-green-500" />
+                              <span>{facility.address?.city || 'Ahmedabad'}</span>
+                            </div>
+                          </div>
+
+                          {/* Genre-based Tags */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            <span className={`px-3 py-1 text-xs rounded-full font-semibold ${getTagClass(sportName)}`}>
+                              {sportName}
+                            </span>
+                            {facility.rating?.average >= 4.5 && (
+                              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
+                                Top Rated
+                              </span>
+                            )}
+                            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs rounded-full font-semibold">
+                              Premium
+                            </span>
+                          </div>
+
+                          {/* Book Button with genre colors */}
+                          <Link
+                            href={`/book/${facility._id}`}
+                            className={`block w-full ${getGenreClass(sportName)} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
+                          >
+                            Book Now - ₹{facility.hourlyRate || '500'}/hr
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  // Fallback when no facilities are available
+                  <div className="col-span-full text-center py-12">
+                    <div className="text-gray-500">
+                      {error ? (
+                        <>
+                          <div className="text-6xl mb-4">⚠️</div>
+                          <h3 className="text-xl font-semibold mb-2">Failed to Load Venues</h3>
+                          <p className="text-gray-400 mb-4">{error}</p>
+                          <button 
+                            onClick={retryFetch} 
+                            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                          >
+                            Try Again
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-6xl mb-4">🏟️</div>
+                          <h3 className="text-xl font-semibold mb-2">No Venues Available</h3>
+                          <p className="text-gray-400">We're working on adding amazing sports venues. Check back soon!</p>
+                          <button 
+                            onClick={() => window.location.reload()} 
+                            className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                          >
+                            Refresh Page
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -359,49 +488,62 @@ export default function Home() {
                 Find venues, connect with players, and elevate your game!
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-green-400 mx-auto rounded-full"></div>
+              
+              {/* Debug information - remove in production */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left text-sm">
+                  <h4 className="font-semibold mb-2">Debug Info:</h4>
+                  <p>Sports loaded: {sports.length}</p>
+                  <p>Facilities loaded: {facilities.length}</p>
+                  <p>Loading state: {loading ? 'Yes' : 'No'}</p>
+                  {error && <p className="text-red-600">Error: {error}</p>}
+                </div>
+              )}
             </div>
 
             {/* Enhanced Sports Grid */}
             <div className="sports-grid">
-              {(sports.length > 0 ? sports : [
-                { _id: 1, name: 'Badminton', emoji: '🏸', venues: '120+' },
-                { _id: 2, name: 'Football', emoji: '⚽', venues: '95+' },
-                { _id: 3, name: 'Cricket', emoji: '🏏', venues: '80+' },
-                { _id: 4, name: 'Swimming', emoji: '🏊‍♂️', venues: '45+' },
-                { _id: 5, name: 'Tennis', emoji: '🎾', venues: '65+' },
-                { _id: 6, name: 'Table Tennis', emoji: '🏓', venues: '75+' },
-                { _id: 7, name: 'Basketball', emoji: '🏀', venues: '50+' },
-                { _id: 8, name: 'Volleyball', emoji: '🏐', venues: '35+' }
-              ]).map((sport, index) => (
-                <Link
-                  key={sport._id}
-                  href={`/facilities?sport=${sport.name.toLowerCase()}`}
-                  className="sport-card rounded-3xl p-6 group border border-green-100 hover:border-green-300 transition-all duration-500"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="sport-card-content">
-                    {/* Sport Icon with Green Background */}
-                    <div className={`w-20 h-20 ${getGenreClass(sport.name)} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500`}>
-                      <span className="text-4xl">{sport.emoji || '🖼️'}</span>
-                    </div>
-                    
-                    {/* Sport Info */}
-                    <div className="text-center">
-                      <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-green-600 transition-colors duration-300">
-                        {sport.name}
-                      </h3>
-                      <p className="text-green-600 font-semibold text-sm mb-3">{sport.venues || '50+'} Venues</p>
-                      <p className="text-gray-500 text-sm mb-4">Find courts & connect with players</p>
+              {sports.length > 0 ? (
+                sports.map((sport, index) => (
+                  <Link
+                    key={sport._id}
+                    href={`/facilities?sport=${sport.name.toLowerCase()}`}
+                    className="sport-card rounded-3xl p-6 group border border-green-100 hover:border-green-300 transition-all duration-500"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="sport-card-content">
+                      {/* Sport Icon with Green Background */}
+                      <div className={`w-20 h-20 ${getGenreClass(sport.name)} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500`}>
+                        <span className="text-4xl">{sport.icon || '🖼️'}</span>
+                      </div>
                       
-                      {/* Interactive Button */}
-                      <div className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-2 rounded-full text-sm font-medium group-hover:from-green-600 group-hover:to-green-500 transition-all duration-300 inline-flex items-center">
-                        Explore
-                        <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                      {/* Sport Info */}
+                      <div className="text-center">
+                        <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-green-600 transition-colors duration-300">
+                          {sport.name}
+                        </h3>
+                        <p className="text-green-600 font-semibold text-sm mb-3">{sport.venues || '50+'} Venues</p>
+                        <p className="text-gray-500 text-sm mb-4">Find courts & connect with players</p>
+                        
+                        {/* Interactive Button */}
+                        <div className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-2 rounded-full text-sm font-medium group-hover:from-green-600 group-hover:to-green-500 transition-all duration-300 inline-flex items-center">
+                          Explore
+                          <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </div>
                       </div>
                     </div>
+                  </Link>
+                ))
+              ) : (
+                // Show loading or no data state for sports
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-500">
+                    <div className="text-6xl mb-4">🏆</div>
+                    <h3 className="text-xl font-semibold mb-2">Loading Sports...</h3>
+                    <p className="text-gray-400">Fetching available sports from the database</p>
                   </div>
-                </Link>
-              ))}
+                </div>
+              )}
             </div>
             
             {/* Call-to-Action */}

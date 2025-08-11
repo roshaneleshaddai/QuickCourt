@@ -5,6 +5,13 @@ const API_BASE_URL =
 async function apiCall(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  console.log("API Call:", {
+    endpoint,
+    fullUrl: url,
+    options,
+    baseUrl: API_BASE_URL,
+  });
+
   const defaultOptions = {
     headers: {
       "Content-Type": "application/json",
@@ -19,7 +26,15 @@ async function apiCall(endpoint, options = {}) {
   }
 
   try {
+    console.log("Making API request to:", url);
     const response = await fetch(url, defaultOptions);
+
+    console.log("API Response:", {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      ok: response.ok,
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -36,7 +51,9 @@ async function apiCall(endpoint, options = {}) {
       );
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log("API Response Data:", data);
+    return data;
   } catch (error) {
     console.error("API call failed:", error);
     throw error;

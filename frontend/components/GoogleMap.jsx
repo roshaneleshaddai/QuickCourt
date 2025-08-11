@@ -19,7 +19,9 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
     if (!mounted) return
 
     // Check if API key is available
-    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here') {
+    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 
+        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here' ||
+        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === '') {
       setError('Google Maps API key not configured')
       setLoading(false)
       return
@@ -167,6 +169,19 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
     }
   }, [coordinates, facilityName, address, mounted])
 
+  // Format address for display
+  const formatAddress = () => {
+    if (!address) return 'Address not available'
+    
+    const parts = []
+    if (address.street) parts.push(address.street)
+    if (address.city) parts.push(address.city)
+    if (address.state) parts.push(address.state)
+    if (address.zipCode) parts.push(address.zipCode)
+    
+    return parts.length > 0 ? parts.join(', ') : 'Address not available'
+  }
+
   if (loading) {
     return (
       <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -180,13 +195,21 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
 
   if (error) {
     return (
-      <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+      <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
         <div className="text-center">
           <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 text-sm">{error}</p>
-          <p className="text-gray-500 text-xs mt-1">
-            {address?.street && `${address.street}, ${address.city}, ${address.state}`}
+          <p className="text-gray-600 text-sm font-medium mb-1">Location</p>
+          <p className="text-gray-500 text-xs px-2 leading-relaxed">
+            {formatAddress()}
           </p>
+          <div className="mt-2 text-xs text-gray-400">
+            <p>📍 {facilityName || 'Facility'}</p>
+            {coordinates?.coordinates && (
+              <p className="mt-1">
+                Coordinates: {coordinates.coordinates[1].toFixed(4)}, {coordinates.coordinates[0].toFixed(4)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     )

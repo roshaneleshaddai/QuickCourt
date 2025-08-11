@@ -10,6 +10,7 @@ import Header from '@/components/Header'
 export default function FacilitiesPage() {
   const [facilities, setFacilities] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [venueSearch, setVenueSearch] = useState('')
   const [selectedSport, setSelectedSport] = useState('')
@@ -19,53 +20,119 @@ export default function FacilitiesPage() {
   const [ratingFilter, setRatingFilter] = useState('')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
 
-  const sports = [
-    'Badminton',
-    'Tennis', 
-    'Basketball',
-    'Football',
-    'Cricket',
-    'Swimming',
-    'Table Tennis',
-    'Volleyball'
-  ]
+  // Fetch sports from API for dynamic filtering
+  const [sports, setSports] = useState([])
 
-  // Mock facilities data to match wireframe
-  const mockFacilities = Array.from({ length: 12 }, (_, i) => ({
-    _id: i + 1,
-    name: 'SRR Badminton',
-    rating: { average: 4.5, count: 6 },
-    location: 'Vaishnavdevi Cir',
-    price: 200,
-    sport: 'Badminton',
-    type: i % 2 === 0 ? 'Indoor' : 'Outdoor',
-    tags: ['Top Rated', 'Budget'],
-    image: null
-  }))
+  useEffect(() => {
+    const fetchSports = async () => {
+      try {
+        const response = await fetch('/api/sports')
+        const data = await response.json()
+        if (data.sports) {
+          setSports(data.sports.map(sport => sport.name))
+        }
+      } catch (error) {
+        console.error('Error fetching sports:', error)
+        // Fallback to default sports if API fails
+        setSports([
+          'Badminton', 'Tennis', 'Basketball', 'Football', 
+          'Cricket', 'Swimming', 'Table Tennis', 'Volleyball'
+        ])
+      }
+    }
+    
+    fetchSports()
+  }, [])
 
   useEffect(() => {
     const fetchFacilities = async () => {
       try {
         setLoading(true)
-        // For now, using mock data to match wireframe exactly
-        setTimeout(() => {
-          setFacilities(mockFacilities)
-          setLoading(false)
-        }, 1000)
+        setError(null)
         
-        // Real API call would be:
-        // const response = await facilitiesAPI.getAll({ page: currentPage, limit: 12 })
-        // setFacilities(response.facilities || [])
+        console.log('Fetching facilities with params:', {
+          page: currentPage,
+          limit: 12,
+          search: searchTerm || undefined,
+          sport: selectedSport || undefined,
+          rating: ratingFilter || undefined
+        })
+        
+        // Build query parameters
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          limit: '12'
+        })
+        
+        if (searchTerm) params.set('search', searchTerm)
+        if (selectedSport) params.set('sport', selectedSport)
+        if (ratingFilter) params.set('rating', ratingFilter)
+        
+        const response = await facilitiesAPI.getAll(Object.fromEntries(params))
+        console.log('Facilities API response:', response)
+        
+        if (response.facilities && Array.isArray(response.facilities)) {
+          // Transform the data to match the expected structure
+          const processedFacilities = response.facilities.map(facility => {
+            // Extract sport information properly
+            let primarySport = 'General Sports'
+            let sportType = 'Indoor'
+            
+            if (facility.sports && facility.sports.length > 0) {
+              const firstSport = facility.sports[0]
+              if (firstSport.sport && firstSport.sport.name) {
+                primarySport = firstSport.sport.name
+              } else if (typeof firstSport === 'string') {
+                primarySport = firstSport
+              }
+              
+              // Determine if indoor/outdoor based on facility data
+              if (facility.venueType) {
+                sportType = facility.venueType
+              } else if (facility.type) {
+                sportType = facility.type
+              }
+            }
+            
+            return {
+              ...facility,
+              name: facility.name || 'Premium Sports Complex',
+              rating: {
+                average: facility.rating?.average || 4.5,
+                count: facility.rating?.count || 0
+              },
+              location: facility.address?.city || 'Ahmedabad',
+              price: facility.hourlyRate || 500,
+              sport: primarySport,
+              type: sportType,
+              tags: facility.rating?.average >= 4.5 ? ['Top Rated'] : ['Premium'],
+              image: facility.images?.[0] || null
+            }
+          })
+          
+          setFacilities(processedFacilities)
+          setTotalPages(response.pagination?.totalPages || 1)
+          setTotalItems(response.pagination?.totalItems || 0)
+        } else {
+          console.warn('No facilities data received or invalid format:', response)
+          setFacilities([])
+        }
+        
       } catch (error) {
         console.error('Error fetching facilities:', error)
+        setError(error.message || 'Failed to load facilities')
         toast.error('Failed to load facilities')
+        setFacilities([])
+      } finally {
         setLoading(false)
       }
     }
     
     fetchFacilities()
-  }, [currentPage])
+  }, [currentPage, searchTerm, selectedSport, ratingFilter])
 
   const clearFilters = () => {
     setSearchTerm('')
@@ -75,6 +142,16 @@ export default function FacilitiesPage() {
     setMaxPrice(5500)
     setVenueType({ indoor: false, outdoor: false })
     setRatingFilter('')
+    setCurrentPage(1) // Reset to first page when clearing filters
+  }
+
+  const handleSearch = () => {
+    setCurrentPage(1) // Reset to first page when searching
+  }
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0  , behavior: 'smooth' })
   }
 
   const FilterSidebar = ({ isMobile = false }) => (
@@ -90,6 +167,7 @@ export default function FacilitiesPage() {
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
       </div>
 
@@ -103,6 +181,7 @@ export default function FacilitiesPage() {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
             value={venueSearch}
             onChange={(e) => setVenueSearch(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
         </div>
       </div>
@@ -205,7 +284,7 @@ export default function FacilitiesPage() {
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-gray-700">& up</span>
+                <span className="ml-2 text-sm text-gray-700"></span>
               </div>
             </label>
           ))}
@@ -314,15 +393,25 @@ export default function FacilitiesPage() {
         </div>
         
         {/* Mobile search */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Search for venues"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-            value={venueSearch}
-            onChange={(e) => setVenueSearch(e.target.value)}
-          />
+        <div className="mt-4 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Search for venues"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              value={venueSearch}
+              onChange={(e) => setVenueSearch(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+          <button
+            onClick={handleSearch}
+            className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors font-medium flex items-center justify-center"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Search Venues
+          </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
           *clicking this will open a side panel for displaying all the same filters as in desktop
@@ -349,7 +438,7 @@ export default function FacilitiesPage() {
 
             {/* Results Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {Array.from({ length: 6 }, (_, i) => (
                   <div key={i} className="bg-white rounded-lg shadow-sm border overflow-hidden animate-pulse">
                     <div className="h-48 bg-gray-200"></div>
@@ -362,39 +451,99 @@ export default function FacilitiesPage() {
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              // Error state
+              <div className="text-center py-12">
+                <div className="text-red-500">
+                  <div className="text-6xl mb-4">⚠️</div>
+                  <h3 className="text-xl font-semibold mb-2">Failed to Load Venues</h3>
+                  <p className="text-gray-600 mb-4">{error}</p>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            ) : facilities.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {facilities.map((facility) => (
+                    <VenueCard key={facility._id} facility={facility} />
+                  ))}
+                </div>
+                
+                {/* Enhanced Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center space-x-2 mt-8">
+                    <button 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="w-10 h-10 flex items-center justify-center text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-600 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+                    >
+                      &lt;
+                    </button>
+                    
+                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum
+                      if (totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-all ${
+                            currentPage === pageNum
+                              ? 'bg-green-500 text-white border-green-500'
+                              : 'text-gray-600 hover:bg-gray-100 border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+                    
+                    <button 
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="w-10 h-10 flex items-center justify-center text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-600 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                )}
+                
+                {/* Results count */}
+                <div className="text-center text-gray-500 mt-4">
+                  Showing {((currentPage - 1) * 12) + 1} to {Math.min(currentPage * 12, totalItems)} of {totalItems} venues
+                </div>
+              </>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {facilities.map((facility) => (
-                  <VenueCard key={facility._id} facility={facility} />
-                ))}
+              // No results state
+              <div className="text-center py-12">
+                <div className="text-gray-500">
+                  <div className="text-6xl mb-4">🏟️</div>
+                  <h3 className="text-xl font-semibold mb-2">No Venues Found</h3>
+                  <p className="text-gray-600 mb-4">Try adjusting your search criteria or filters</p>
+                  <button 
+                    onClick={clearFilters} 
+                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
               </div>
             )}
-
-            {/* Pagination */}
-            <div className="flex items-center justify-center space-x-2 mt-8">
-              <button className="w-8 h-8 flex items-center justify-center text-gray-400">
-                &lt;
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center bg-black text-white rounded">
-                1
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
-                2
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
-                3
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
-                4
-              </button>
-              <span className="px-2 text-gray-400">...</span>
-              <button className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded">
-                11
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center text-gray-400">
-                &gt;
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -403,18 +552,29 @@ export default function FacilitiesPage() {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setMobileFiltersOpen(false)} />
-          <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Filters</h2>
+          <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto transform transition-transform duration-300 ease-in-out">
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-semibold text-gray-900">Filters & Search</h2>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-gray-600"
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-4">
               <FilterSidebar isMobile={true} />
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    clearFilters()
+                    setMobileFiltersOpen(false)
+                  }}
+                  className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium"
+                >
+                  Clear All Filters
+                </button>
+              </div>
             </div>
           </div>
         </div>
