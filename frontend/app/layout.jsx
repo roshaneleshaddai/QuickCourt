@@ -12,7 +12,11 @@ export const metadata = {
   description: 'Book your favorite sports facilities and courts with ease. Badminton, Tennis, Basketball and more.',
   keywords: 'sports, facility, booking, court, badminton, tennis, basketball',
   authors: [{ name: 'QuickCourt Team' }],
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({ children }) {
