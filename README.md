@@ -1,4 +1,6 @@
 # QuickCourt - Sports Facility Booking Application
+# Deployed at: https://quick-court-seven.vercel.app/
+# Presentation Link: https://youtu.be/KLNRFbKDpzE
 
 A modern, full-stack sports facility booking application built with Next.js, Express, and MongoDB. This project was developed for the Odoo Hackathon 2025 - Problem Statement 1.
 
