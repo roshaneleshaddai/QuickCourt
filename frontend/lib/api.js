@@ -125,6 +125,34 @@ export const authAPI = {
       method: "POST",
       body: JSON.stringify({ email }),
     }),
+
+  // Send OTP for verification
+  sendOTP: (email) =>
+    apiCall("/auth/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  // Verify OTP
+  verifyOTP: (email, otp) =>
+    apiCall("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    }),
+
+  // Check if email exists
+  checkEmail: (email) =>
+    apiCall("/auth/check-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+
+  // Reset password with OTP
+  resetPassword: (email, otp, password) =>
+    apiCall("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, otp, password }),
+    }),
 };
 
 // User API calls
@@ -146,6 +174,22 @@ export const userAPI = {
   getBookings: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return apiCall(`/users/bookings?${queryString}`);
+  },
+
+  // Get user by ID (admin only)
+  getById: (id) => apiCall(`/users/${id}`),
+
+  // Update user status (admin only)
+  updateStatus: (id, isActive, adminNotes) =>
+    apiCall(`/users/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ isActive, adminNotes }),
+    }),
+
+  // Get user's booking history (admin only)
+  getBookingsByUserId: (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/users/${id}/bookings?${queryString}`);
   },
 };
 
@@ -179,6 +223,38 @@ export const facilitiesAPI = {
     apiCall(`/facilities/${id}/availability?date=${date}`),
 
   getBlockedTimeSlots: (id) => apiCall(`/facilities/${id}/blocked-slots`),
+
+  // Get facilities by owner
+  getByOwner: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/facilities/my-facilities?${queryString}`);
+  },
+
+  // Get facilities by sport
+  getBySport: (sportId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/facilities/sport/${sportId}?${queryString}`);
+  },
+
+  // Search facilities
+  search: (query, params = {}) => {
+    const searchParams = new URLSearchParams({
+      q: query,
+      ...params,
+    }).toString();
+    return apiCall(`/facilities/search?${searchParams}`);
+  },
+
+  // Get nearby facilities
+  getNearby: (latitude, longitude, radius = 10, params = {}) => {
+    const searchParams = new URLSearchParams({
+      lat: latitude,
+      lng: longitude,
+      radius,
+      ...params,
+    }).toString();
+    return apiCall(`/facilities/nearby?${searchParams}`);
+  },
 };
 
 // Sports API calls
@@ -214,6 +290,24 @@ export const sportsAPI = {
       method: "PUT",
       body: JSON.stringify({ increment }),
     }),
+
+  // Get sports by category
+  getByCategory: (category, params = {}) => {
+    const queryString = new URLSearchParams({ category, ...params }).toString();
+    return apiCall(`/sports/category/${category}?${queryString}`);
+  },
+
+  // Get popular sports
+  getPopular: (limit = 10) => apiCall(`/sports/popular?limit=${limit}`),
+
+  // Search sports
+  search: (query, params = {}) => {
+    const searchParams = new URLSearchParams({
+      q: query,
+      ...params,
+    }).toString();
+    return apiCall(`/sports/search?${searchParams}`);
+  },
 };
 
 // Bookings API calls
@@ -253,6 +347,34 @@ export const bookingsAPI = {
 
   getFacilityAvailability: (facilityId, date) =>
     apiCall(`/facilities/${facilityId}/availability?date=${date}`),
+
+  // Cancel booking
+  cancel: (id, reason = "") =>
+    apiCall(`/bookings/${id}`, {
+      method: "DELETE",
+      body: JSON.stringify({ reason }),
+    }),
+
+  // Get user's upcoming bookings
+  getUpcoming: (params = {}) => {
+    const queryString = new URLSearchParams({
+      status: "confirmed",
+      ...params,
+    }).toString();
+    return apiCall(`/bookings?${queryString}`);
+  },
+
+  // Get user's past bookings
+  getPast: (params = {}) => {
+    const queryString = new URLSearchParams({
+      status: "completed",
+      ...params,
+    }).toString();
+    return apiCall(`/bookings?${queryString}`);
+  },
+
+  // Get booking statistics
+  getStats: () => apiCall("/bookings/stats"),
 };
 
 // Facility Owner API calls
@@ -463,10 +585,113 @@ export const reviewsAPI = {
     apiCall(`/reviews/${id}`, {
       method: "DELETE",
     }),
+
+  // Get user's own reviews
+  getMyReviews: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/reviews/my-reviews?${queryString}`);
+  },
+
+  // Get review by ID
+  getById: (id) => apiCall(`/reviews/${id}`),
+
+  // Get review statistics for a facility
+  getFacilityStats: (facilityId) =>
+    apiCall(`/reviews/facility/${facilityId}/stats`),
 };
 
 // Health check
 export const healthCheck = () => apiCall("/health");
+
+// Utility functions
+export const apiUtils = {
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    const token = localStorage.getItem("token");
+    return !!token;
+  },
+
+  // Get auth token
+  getToken: () => localStorage.getItem("token"),
+
+  // Set auth token
+  setToken: (token) => localStorage.setItem("token", token),
+
+  // Remove auth token
+  removeToken: () => localStorage.removeItem("token"),
+
+  // Clear all auth data
+  clearAuth: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  },
+
+  // Get user data from localStorage
+  getUser: () => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  // Set user data in localStorage
+  setUser: (user) => localStorage.setItem("user", JSON.stringify(user)),
+
+  // Check if user has specific role
+  hasRole: (role) => {
+    const user = apiUtils.getUser();
+    return user && user.role === role;
+  },
+
+  // Check if user is admin
+  isAdmin: () => apiUtils.hasRole("admin"),
+
+  // Check if user is facility owner
+  isFacilityOwner: () => apiUtils.hasRole("facility_owner"),
+
+  // Check if user is regular user
+  isUser: () => apiUtils.hasRole("user"),
+};
+
+// Error handling utilities
+export const apiErrorHandler = {
+  // Handle common API errors
+  handleError: (error, fallbackMessage = "Something went wrong") => {
+    console.error("API Error:", error);
+
+    if (error.message.includes("Network error")) {
+      return "Unable to connect to server. Please check your internet connection.";
+    }
+
+    if (error.message.includes("401")) {
+      return "Authentication required. Please log in again.";
+    }
+
+    if (error.message.includes("403")) {
+      return "Access denied. You don't have permission to perform this action.";
+    }
+
+    if (error.message.includes("404")) {
+      return "Resource not found.";
+    }
+
+    if (error.message.includes("500")) {
+      return "Server error. Please try again later.";
+    }
+
+    return error.message || fallbackMessage;
+  },
+
+  // Check if error is authentication related
+  isAuthError: (error) => {
+    return error.message.includes("401") || error.message.includes("403");
+  },
+
+  // Check if error is network related
+  isNetworkError: (error) => {
+    return (
+      error.message.includes("Network error") || error.message.includes("fetch")
+    );
+  },
+};
 
 // Chatbot API calls
 export const chatbotAPI = {
@@ -485,6 +710,25 @@ export const chatbotAPI = {
     apiCall("/chatbot/quick-action", {
       method: "POST",
       body: JSON.stringify({ action, data }),
+    }),
+
+  // Get available time slots for a venue
+  getAvailableSlots: (facilityId, courtId, date) => {
+    const params = new URLSearchParams({
+      facilityId,
+      courtId,
+      date,
+    }).toString();
+    return apiCall(`/chatbot/slots?${params}`);
+  },
+
+  // Get popular venues
+  getPopularVenues: () => apiCall("/chatbot/popular-venues"),
+
+  // Seed database with sample data
+  seedDatabase: () =>
+    apiCall("/chatbot/seed-database", {
+      method: "POST",
     }),
 };
 
@@ -526,4 +770,13 @@ export const uploadAPI = {
       method: "POST",
       body: JSON.stringify({ imageUrl, transformations }),
     }),
+
+  // Get upload statistics
+  getStats: () => apiCall("/upload/stats"),
+
+  // Get user's uploads
+  getMyUploads: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/upload/my-uploads?${queryString}`);
+  },
 };
