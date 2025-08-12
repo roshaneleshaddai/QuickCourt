@@ -1,176 +1,216 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import { Search, MapPin, Star, Users, Filter, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react'
-import toast from 'react-hot-toast'
-import Link from 'next/link'
-import Image from 'next/image'
-import { sportsAPI, facilitiesAPI } from '@/lib/api'
-import { useAuth } from '@/contexts/AuthContext'
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  MapPin,
+  Star,
+  Users,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  X,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import Link from "next/link";
+import Image from "next/image";
+import { sportsAPI, facilitiesAPI } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
-import Header from '@/components/Header'
+import Header from "@/components/Header";
 
 export default function Home() {
-  const [sports, setSports] = useState([])
-  const [facilities, setFacilities] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSport, setSelectedSport] = useState('')
-  const [selectedCity, setSelectedCity] = useState('Ahmedabad')
+  const [sports, setSports] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSport, setSelectedSport] = useState("");
+  const [selectedCity, setSelectedCity] = useState("Ahmedabad");
 
   // Horizontal scrollers
-  const facilityScrollRef = useRef(null)
-  const sportsScrollRef = useRef(null)
+  const facilityScrollRef = useRef(null);
+  const sportsScrollRef = useRef(null);
 
   const scrollByAmount = (ref, amount) => {
-    if (!ref?.current) return
-    ref.current.scrollBy({ left: amount, behavior: 'smooth' })
-  }
+    if (!ref?.current) return;
+    ref.current.scrollBy({ left: amount, behavior: "smooth" });
+  };
 
   // City suggestions
   const citySuggestions = [
-    'Ahmedabad', 'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune',
-    'Kolkata', 'Jaipur', 'Surat', 'Lucknow', 'Indore', 'Bhopal', 'Nagpur'
-  ]
+    "Ahmedabad",
+    "Mumbai",
+    "Delhi",
+    "Bangalore",
+    "Hyderabad",
+    "Chennai",
+    "Pune",
+    "Kolkata",
+    "Jaipur",
+    "Surat",
+    "Lucknow",
+    "Indore",
+    "Bhopal",
+    "Nagpur",
+  ];
 
   // Genre color mapping
   const getGenreClass = (sportName) => {
-    const name = sportName?.toLowerCase() || ''
-    if (name.includes('badminton')) return 'genre-badminton'
-    if (name.includes('football') || name.includes('soccer')) return 'genre-football'
-    if (name.includes('cricket')) return 'genre-cricket'
-    if (name.includes('swimming')) return 'genre-swimming'
-    if (name.includes('tennis') && !name.includes('table')) return 'genre-tennis'
-    if (name.includes('table tennis') || name.includes('ping pong')) return 'genre-table-tennis'
-    if (name.includes('basketball')) return 'genre-basketball'
-    if (name.includes('volleyball')) return 'genre-volleyball'
-    return 'genre-default'
-  }
+    const name = sportName?.toLowerCase() || "";
+    if (name.includes("badminton")) return "genre-badminton";
+    if (name.includes("football") || name.includes("soccer"))
+      return "genre-football";
+    if (name.includes("cricket")) return "genre-cricket";
+    if (name.includes("swimming")) return "genre-swimming";
+    if (name.includes("tennis") && !name.includes("table"))
+      return "genre-tennis";
+    if (name.includes("table tennis") || name.includes("ping pong"))
+      return "genre-table-tennis";
+    if (name.includes("basketball")) return "genre-basketball";
+    if (name.includes("volleyball")) return "genre-volleyball";
+    return "genre-default";
+  };
 
   const getTagClass = (sportName) => {
-    const name = sportName?.toLowerCase() || ''
-    if (name.includes('badminton')) return 'tag-badminton'
-    if (name.includes('football') || name.includes('soccer')) return 'tag-football'
-    if (name.includes('cricket')) return 'tag-cricket'
-    if (name.includes('swimming')) return 'tag-swimming'
-    if (name.includes('tennis') && !name.includes('table')) return 'tag-tennis'
-    if (name.includes('table tennis') || name.includes('ping pong')) return 'tag-table-tennis'
-    if (name.includes('basketball')) return 'tag-basketball'
-    if (name.includes('volleyball')) return 'tag-volleyball'
-    return 'bg-gray-500 text-white'
-  }
+    const name = sportName?.toLowerCase() || "";
+    if (name.includes("badminton")) return "tag-badminton";
+    if (name.includes("football") || name.includes("soccer"))
+      return "tag-football";
+    if (name.includes("cricket")) return "tag-cricket";
+    if (name.includes("swimming")) return "tag-swimming";
+    if (name.includes("tennis") && !name.includes("table")) return "tag-tennis";
+    if (name.includes("table tennis") || name.includes("ping pong"))
+      return "tag-table-tennis";
+    if (name.includes("basketball")) return "tag-basketball";
+    if (name.includes("volleyball")) return "tag-volleyball";
+    return "bg-gray-500 text-white";
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        
-        console.log('Starting to fetch data from API...')
-        
+        setLoading(true);
+        setError(null);
+
+        console.log("Starting to fetch data from API...");
+
         // Fetch sports and facilities from the database
         const [sportsData, facilitiesData] = await Promise.all([
           sportsAPI.getAll({ limit: 8 }),
-          facilitiesAPI.getAll({ 
-            limit: 6, 
-            page: 1
-          })
-        ])
-        
-        console.log('Sports API response:', sportsData)
-        console.log('Facilities API response:', facilitiesData)
-        
+          facilitiesAPI.getAll({
+            limit: 6,
+            page: 1,
+          }),
+        ]);
+
+        console.log("Sports API response:", sportsData);
+        console.log("Facilities API response:", facilitiesData);
+
         // Set sports data
         if (sportsData && sportsData.sports) {
-          setSports(sportsData.sports)
-          console.log('Sports set successfully:', sportsData.sports.length)
+          setSports(sportsData.sports);
+          console.log("Sports set successfully:", sportsData.sports.length);
         } else {
-          console.warn('No sports data received')
-          setSports([])
+          console.warn("No sports data received");
+          setSports([]);
         }
-        
+
         // Process and set facilities data
-        if (facilitiesData && facilitiesData.facilities && Array.isArray(facilitiesData.facilities)) {
-          console.log('Processing facilities data:', facilitiesData.facilities.length, 'facilities')
-          
+        if (
+          facilitiesData &&
+          facilitiesData.facilities &&
+          Array.isArray(facilitiesData.facilities)
+        ) {
+          console.log(
+            "Processing facilities data:",
+            facilitiesData.facilities.length,
+            "facilities"
+          );
+
           // Transform the data to match the expected structure
-          const processedFacilities = facilitiesData.facilities.map(facility => {
-            console.log('Processing facility:', facility.name, facility)
-            
-            // Extract sport information properly
-            let primarySport = 'General Sports'
-            if (facility.sports && facility.sports.length > 0) {
-              const firstSport = facility.sports[0]
-              if (firstSport.sport && firstSport.sport.name) {
-                primarySport = firstSport.sport.name
-              } else if (typeof firstSport === 'string') {
-                primarySport = firstSport
+          const processedFacilities = facilitiesData.facilities.map(
+            (facility) => {
+              console.log("Processing facility:", facility.name, facility);
+
+              // Extract sport information properly
+              let primarySport = "General Sports";
+              if (facility.sports && facility.sports.length > 0) {
+                const firstSport = facility.sports[0];
+                if (firstSport.sport && firstSport.sport.name) {
+                  primarySport = firstSport.sport.name;
+                } else if (typeof firstSport === "string") {
+                  primarySport = firstSport;
+                }
               }
+
+              return {
+                ...facility,
+                // Ensure required fields have fallback values
+                name: facility.name || "Premium Sports Complex",
+                rating: {
+                  average: facility.rating?.average || 4.5,
+                  count: facility.rating?.count || 0,
+                },
+                address: {
+                  city: facility.address?.city || "Ahmedabad",
+                  street: facility.address?.street || "",
+                  state: facility.address?.state || "",
+                  zipCode: facility.address?.zipCode || "",
+                },
+                hourlyRate: facility.hourlyRate || 500,
+                // Ensure sports array is properly structured
+                sports: Array.isArray(facility.sports) ? facility.sports : [],
+                // Store the extracted primary sport for easy access
+                primarySport: primarySport,
+              };
             }
-            
-            return {
-              ...facility,
-              // Ensure required fields have fallback values
-              name: facility.name || 'Premium Sports Complex',
-              rating: {
-                average: facility.rating?.average || 4.5,
-                count: facility.rating?.count || 0
-              },
-              address: {
-                city: facility.address?.city || 'Ahmedabad',
-                street: facility.address?.street || '',
-                state: facility.address?.state || '',
-                zipCode: facility.address?.zipCode || ''
-              },
-              hourlyRate: facility.hourlyRate || 500,
-              // Ensure sports array is properly structured
-              sports: Array.isArray(facility.sports) ? facility.sports : [],
-              // Store the extracted primary sport for easy access
-              primarySport: primarySport
-            }
-          })
-          
-          console.log('Processed facilities:', processedFacilities)
-          setFacilities(processedFacilities)
+          );
+
+          console.log("Processed facilities:", processedFacilities);
+          setFacilities(processedFacilities);
         } else {
-          console.warn('No facilities data received or invalid format:', facilitiesData)
-          setFacilities([])
+          console.warn(
+            "No facilities data received or invalid format:",
+            facilitiesData
+          );
+          setFacilities([]);
         }
-        
       } catch (error) {
-        console.error('Error fetching data:', error)
-        setError(error.message || 'Failed to load data')
-        toast.error('Failed to load data. Please try again later.')
+        console.error("Error fetching data:", error);
+        setError(error.message || "Failed to load data");
+        toast.error("Failed to load data. Please try again later.");
         // Set empty arrays on error to prevent crashes
-        setSports([])
-        setFacilities([])
-    } finally {
-        setLoading(false)
+        setSports([]);
+        setFacilities([]);
+      } finally {
+        setLoading(false);
+
       }
-    }
-    
-    fetchData()
-  }, [])
+    };
+
+    fetchData();
+  }, []);
 
   const retryFetch = () => {
-    setError(null)
-    setLoading(true)
+    setError(null);
+    setLoading(true);
     // Trigger the useEffect again by updating a dependency
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handleSearch = () => {
     if (!searchTerm && !selectedSport && !selectedCity) {
-      toast.error('Please enter search criteria')
-      return
+      toast.error("Please enter search criteria");
+      return;
     }
-    const params = new URLSearchParams()
-    if (searchTerm) params.set('search', searchTerm)
-    if (selectedSport) params.set('sport', selectedSport)
-    if (selectedCity) params.set('city', selectedCity)
-    window.location.href = `/facilities?${params.toString()}`
-  }
+    const params = new URLSearchParams();
+    if (searchTerm) params.set("search", searchTerm);
+    if (selectedSport) params.set("sport", selectedSport);
+    if (selectedCity) params.set("city", selectedCity);
+    window.location.href = `/facilities?${params.toString()}`;
+  };
 
   if (loading) {
     return (
@@ -179,11 +219,14 @@ export default function Home() {
           <div className="relative">
             <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-green-600 rounded-full animate-ping"></div>
-        </div>
-          <p className="text-gray-600 mt-4 font-medium">Loading amazing experiences...</p>
+
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">
+            Loading amazing experiences...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -218,6 +261,7 @@ export default function Home() {
                     </span>
         </h1>
                   <p className="text-gray-600 text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed">
+
                     Seamlessly explore <span className="font-semibold text-green-600">premium sports venues</span> and connect with 
                     <span className="font-semibold text-green-700"> passionate athletes</span> just like you!
         </p>
@@ -241,7 +285,7 @@ export default function Home() {
                       ))}
                     </datalist>
                   </div>
-                  
+
                   <select
                     className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 transition-all"
                     value={selectedSport}
@@ -254,7 +298,7 @@ export default function Home() {
                       </option>
                     ))}
                   </select>
-                  
+
                   <button
                     onClick={handleSearch}
                     className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-4 rounded-xl font-bold hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-lg"
@@ -272,7 +316,9 @@ export default function Home() {
                     <div className="text-center text-blue-600">
                       <div className="text-8xl mb-6">🖼</div>
                       <p className="text-2xl font-bold mb-2">Hero Image</p>
-                      <p className="text-lg opacity-75">Insert your amazing hero visual here</p>
+                      <p className="text-lg opacity-75">
+                        Insert your amazing hero visual here
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -298,7 +344,7 @@ export default function Home() {
                     ))}
                   </datalist>
                 </div>
-                
+
                 <select
                   className="px-6 py-5 border-0 focus:ring-0 text-gray-900 bg-green-50 rounded-2xl font-semibold text-lg min-w-[180px] focus:bg-green-100 transition-all"
                   value={selectedSport}
@@ -311,7 +357,7 @@ export default function Home() {
                     </option>
                   ))}
                 </select>
-                
+
                 <button
                   onClick={handleSearch}
                   className="bg-gradient-to-r from-green-600 to-green-500 text-white px-10 py-5 rounded-2xl font-bold hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-xl text-lg"
@@ -334,9 +380,14 @@ export default function Home() {
                 <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-green-700 bg-clip-text text-transparent">
                   Book Venues
                 </h2>
-                <p className="text-gray-600 mt-2">Discover amazing sports facilities</p>
+                <p className="text-gray-600 mt-2">
+                  Discover amazing sports facilities
+                </p>
               </div>
-              <Link href="/facilities" className="text-green-600 hover:text-green-700 font-semibold text-lg animate-lift px-4 py-2 rounded-full hover:bg-green-50 transition-all">
+              <Link
+                href="/facilities"
+                className="text-green-600 hover:text-green-700 font-semibold text-lg animate-lift px-4 py-2 rounded-full hover:bg-green-50 transition-all"
+              >
                 See all venues →
               </Link>
             </div>
@@ -364,7 +415,10 @@ export default function Home() {
                 {loading ? (
                   // Loading skeleton for facilities
                   Array.from({ length: 6 }, (_, i) => (
-                    <div key={i} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-pulse">
+                    <div
+                      key={i}
+                      className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-pulse"
+                    >
                       <div className="h-48 bg-gray-200"></div>
                       <div className="p-6">
                         <div className="h-6 bg-gray-200 rounded mb-3"></div>
@@ -377,26 +431,45 @@ export default function Home() {
                 ) : facilities.length > 0 ? (
                   facilities.map((facility) => {
                     // Use the processed primary sport from the data
-                    const sportName = facility.primarySport || 'General Sports'
-                    
-                    console.log('Rendering facility:', facility.name, 'with sport:', sportName)
-                    
+                    const sportName = facility.primarySport || "General Sports";
+
+                    console.log(
+                      "Rendering facility:",
+                      facility.name,
+                      "with sport:",
+                      sportName
+                    );
+
                     return (
-                      <div key={facility._id} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start">
+                      <div
+                        key={facility._id}
+                        className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start"
+                      >
                         {/* Genre-colored Image Placeholder */}
-                        <div className={`h-48 ${getGenreClass(sportName)} flex items-center justify-center relative`}>
+                        <div
+                          className={`h-48 ${getGenreClass(
+                            sportName
+                          )} flex items-center justify-center relative`}
+                        >
                           <div className="text-center text-white">
-                            <div className="text-6xl mb-2 float-animation">🖼</div>
+                            <div className="text-6xl mb-2 float-animation">
+                              🖼
+                            </div>
                             <p className="font-bold">Venue Image</p>
-                            <p className="text-sm opacity-90">{sportName} Facility</p>
+                            <p className="text-sm opacity-90">
+                              {sportName} Facility
+                            </p>
                           </div>
                           <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                             <div className="flex items-center text-white">
                               <Star className="h-4 w-4 fill-current mr-1" />
-                              <span className="font-bold text-sm">{facility.rating?.average || '4.8'}</span>
-            </div>
-          </div>
-        </div>
+                              <span className="font-bold text-sm">
+                                {facility.rating?.average || "4.8"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
 
                         {/* Venue Info */}
                         <div className="p-6">
@@ -406,13 +479,19 @@ export default function Home() {
                             </h3>
                             <div className="flex items-center text-gray-600 text-sm">
                               <MapPin className="h-4 w-4 mr-1 text-green-500" />
-                              <span>{facility.address?.city || 'Ahmedabad'}</span>
+                              <span>
+                                {facility.address?.city || "Ahmedabad"}
+                              </span>
                             </div>
                           </div>
 
                           {/* Genre-based Tags */}
                           <div className="flex flex-wrap gap-2 mb-4">
-                            <span className={`px-3 py-1 text-xs rounded-full font-semibold ${getTagClass(sportName)}`}>
+                            <span
+                              className={`px-3 py-1 text-xs rounded-full font-semibold ${getTagClass(
+                                sportName
+                              )}`}
+                            >
                               {sportName}
                             </span>
                             {facility.rating?.average >= 4.5 && (
@@ -426,15 +505,17 @@ export default function Home() {
                           </div>
 
                           {/* Book Button with genre colors */}
-                                                        <Link
-                              href={`/book/${facility._id}`}
-                              className={`block w-full ${getGenreClass(sportName)} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
-                            >
-                            Book Now - ₹{facility.hourlyRate || '500'}/hr
+                          <Link
+                            href={`/book/${facility._id}`}
+                            className={`block w-full ${getGenreClass(
+                              sportName
+                            )} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
+                          >
+                            Book Now - ₹{facility.hourlyRate || "500"}/hr
                           </Link>
                         </div>
                       </div>
-                    )
+                    );
                   })
                 ) : (
                   // Fallback when no facilities are available
@@ -443,10 +524,12 @@ export default function Home() {
                       {error ? (
                         <>
                           <div className="text-6xl mb-4">⚠</div>
-                          <h3 className="text-xl font-semibold mb-2">Failed to Load Venues</h3>
+                          <h3 className="text-xl font-semibold mb-2">
+                            Failed to Load Venues
+                          </h3>
                           <p className="text-gray-400 mb-4">{error}</p>
-                          <button 
-                            onClick={retryFetch} 
+                          <button
+                            onClick={retryFetch}
                             className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                           >
                             Try Again
@@ -455,10 +538,15 @@ export default function Home() {
                       ) : (
                         <>
                           <div className="text-6xl mb-4">🏟</div>
-                          <h3 className="text-xl font-semibold mb-2">No Venues Available</h3>
-                          <p className="text-gray-400">We're working on adding amazing sports venues. Check back soon!</p>
-                          <button 
-                            onClick={() => window.location.reload()} 
+                          <h3 className="text-xl font-semibold mb-2">
+                            No Venues Available
+                          </h3>
+                          <p className="text-gray-400">
+                            We're working on adding amazing sports venues. Check
+                            back soon!
+                          </p>
+                          <button
+                            onClick={() => window.location.reload()}
                             className="mt-4 px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                           >
                             Refresh Page
@@ -484,18 +572,21 @@ export default function Home() {
                 🏆 Popular Sports
               </h2>
               <p className="text-gray-700 text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
-                Discover your passion with our <span className="font-semibold text-green-600">premium sports collection</span>. 
-                Find venues, connect with players, and elevate your game!
+                Discover your passion with our{" "}
+                <span className="font-semibold text-green-600">
+                  premium sports collection
+                </span>
+                . Find venues, connect with players, and elevate your game!
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-green-400 mx-auto rounded-full"></div>
-              
+
               {/* Debug information - remove in production */}
-              {process.env.NODE_ENV === 'development' && (
+              {process.env.NODE_ENV === "development" && (
                 <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left text-sm">
                   <h4 className="font-semibold mb-2">Debug Info:</h4>
                   <p>Sports loaded: {sports.length}</p>
                   <p>Facilities loaded: {facilities.length}</p>
-                  <p>Loading state: {loading ? 'Yes' : 'No'}</p>
+                  <p>Loading state: {loading ? "Yes" : "No"}</p>
                   {error && <p className="text-red-600">Error: {error}</p>}
                 </div>
               )}
@@ -513,22 +604,32 @@ export default function Home() {
                   >
                     <div className="sport-card-content">
                       {/* Sport Icon with Green Background */}
-                      <div className={`w-20 h-20 ${getGenreClass(sport.name)} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500`}>
-                        <span className="text-4xl">{sport.icon || '🖼'}</span>
+                      <div
+                        className={`w-20 h-20 ${getGenreClass(
+                          sport.name
+                        )} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500`}
+                      >
+                        <span className="text-4xl">{sport.icon || "🖼"}</span>
                       </div>
-                      
+
                       {/* Sport Info */}
                       <div className="text-center">
                         <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-green-600 transition-colors duration-300">
                           {sport.name}
                         </h3>
-                        <p className="text-green-600 font-semibold text-sm mb-3">{sport.venues || '50+'} Venues</p>
-                        <p className="text-gray-500 text-sm mb-4">Find courts & connect with players</p>
-                        
+                        <p className="text-green-600 font-semibold text-sm mb-3">
+                          {sport.venues || "50+"} Venues
+                        </p>
+                        <p className="text-gray-500 text-sm mb-4">
+                          Find courts & connect with players
+                        </p>
+
                         {/* Interactive Button */}
                         <div className="bg-gradient-to-r from-green-500 to-green-400 text-white px-6 py-2 rounded-full text-sm font-medium group-hover:from-green-600 group-hover:to-green-500 transition-all duration-300 inline-flex items-center">
                           Explore
-                          <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                          <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">
+                            →
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -539,17 +640,21 @@ export default function Home() {
                 <div className="col-span-full text-center py-12">
                   <div className="text-gray-500">
                     <div className="text-6xl mb-4">🏆</div>
-                    <h3 className="text-xl font-semibold mb-2">Loading Sports...</h3>
-                    <p className="text-gray-400">Fetching available sports from the database</p>
+                    <h3 className="text-xl font-semibold mb-2">
+                      Loading Sports...
+                    </h3>
+                    <p className="text-gray-400">
+                      Fetching available sports from the database
+                    </p>
                   </div>
                 </div>
               )}
             </div>
-            
+
             {/* Call-to-Action */}
             <div className="mt-16 text-center">
-              <Link 
-                href="/facilities" 
+              <Link
+                href="/facilities"
                 className="inline-flex items-center bg-gradient-to-r from-green-600 to-green-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-green-700 hover:to-green-600 transition-all animate-button shadow-xl"
               >
                 <span className="mr-3">🚀</span>
@@ -571,18 +676,28 @@ export default function Home() {
                 🚀 Ready to Play?
               </h3>
               <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed">
-                Join thousands of athletes who have found their perfect sports venues through 
-                <span className="font-semibold text-green-400"> QuickCourt</span>
+                Join thousands of athletes who have found their perfect sports
+                venues through
+                <span className="font-semibold text-green-400">
+                  {" "}
+                  QuickCourt
+                </span>
               </p>
-      </div>
+
+            </div>
+
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-12">
               <div className="animate-lift">
-                <div className="text-4xl font-bold text-green-400 mb-2">500+</div>
+                <div className="text-4xl font-bold text-green-400 mb-2">
+                  500+
+                </div>
                 <div className="text-gray-300 text-lg">Premium Venues</div>
               </div>
               <div className="animate-lift">
-                <div className="text-4xl font-bold text-emerald-400 mb-2">10K+</div>
+                <div className="text-4xl font-bold text-emerald-400 mb-2">
+                  10K+
+                </div>
                 <div className="text-gray-300 text-lg">Active Players</div>
               </div>
               <div className="animate-lift">
@@ -590,14 +705,16 @@ export default function Home() {
                 <div className="text-gray-300 text-lg">Sports Available</div>
               </div>
               <div className="animate-lift">
-                <div className="text-4xl font-bold text-yellow-400 mb-2">4.8★</div>
+                <div className="text-4xl font-bold text-yellow-400 mb-2">
+                  4.8★
+                </div>
                 <div className="text-gray-300 text-lg">User Rating</div>
         </div>
             </div>
 
             {/* Call to Action */}
             <div className="text-center mb-12">
-              <Link 
+              <Link
                 href="/facilities"
                 className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-400 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-green-600 hover:to-green-500 transition-all animate-button shadow-2xl"
               >
@@ -605,12 +722,13 @@ export default function Home() {
                 Start Playing Today
                 <span className="ml-3">→</span>
               </Link>
-                    </div>
-            
+            </div>
+
+
             <div className="pt-8 border-t border-green-700/30 text-center">
               <p className="text-gray-400 text-lg">
-                &copy; 2025 QuickCourt. Made with 
-                <span className="text-green-400 mx-1">💚</span> 
+                &copy; 2025 QuickCourt. Made with
+                <span className="text-green-400 mx-1">💚</span>
                 for sports enthusiasts.
                       </p>
                     </div>
@@ -618,5 +736,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
