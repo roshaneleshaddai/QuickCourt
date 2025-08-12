@@ -3,33 +3,31 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { authAPI } from '@/lib/api';
 
-const OTPVerification = ({ email, purpose = 'register' }) => {
+export default function OTPVerification({ email, purpose = 'register' }) {
   const [otp, setOtp] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
   const router = useRouter();
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+
+    if (!otp || otp.length !== 6) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
     setIsLoading(true);
     setMessage('');
 
     try {
-      // Use the correct backend URL
-      const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
+      const response = await authAPI.verifyOTP({ email, otp });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(data.message);
-        toast.success(data.message);
+      if (response.success) {
+        setMessage(response.message);
+        toast.success(response.message);
         
         // Redirect based on purpose
         if (purpose === 'register') {
@@ -39,7 +37,7 @@ const OTPVerification = ({ email, purpose = 'register' }) => {
           router.push(`/auth/reset-password?email=${encodeURIComponent(email)}&otp=${otp}`);
         }
       } else {
-        const errorMsg = data.error || data.message || 'Verification failed';
+        const errorMsg = response.error || response.message || 'Verification failed';
         setMessage(errorMsg);
         toast.error(errorMsg);
       }
@@ -57,23 +55,14 @@ const OTPVerification = ({ email, purpose = 'register' }) => {
     setMessage('');
 
     try {
-      // Use the correct backend URL
-      const response = await fetch('http://localhost:5000/api/auth/send-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response = await authAPI.sendOTP({ email });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.success) {
         const successMsg = 'New OTP sent successfully';
         setMessage(successMsg);
         toast.success(successMsg);
       } else {
-        const errorMsg = data.error || data.message || 'Failed to resend OTP';
+        const errorMsg = response.error || response.message || 'Failed to resend OTP';
         setMessage(errorMsg);
         toast.error(errorMsg);
       }
@@ -143,5 +132,3 @@ const OTPVerification = ({ email, purpose = 'register' }) => {
     </div>
   );
 };
-
-export default OTPVerification;

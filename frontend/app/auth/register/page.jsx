@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
+import { authAPI } from "@/lib/api";
 import Header from "@/components/Header";
 
 export default function RegisterPage() {
@@ -95,7 +96,18 @@ export default function RegisterPage() {
   const handleSendOTP = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
       return;
     }
 
@@ -103,44 +115,23 @@ export default function RegisterPage() {
 
     try {
       // First check if email is already registered
-      const checkResponse = await fetch(
-        "http://localhost:5000/api/auth/check-email",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: formData.email }),
-        }
-      );
+      const checkResponse = await authAPI.checkEmail({ email: formData.email });
 
-      const checkData = await checkResponse.json();
-
-      if (checkData.exists) {
+      if (checkResponse.exists) {
         toast.error("Email already registered");
         setIsLoading(false);
         return;
       }
 
       // Send OTP
-      const otpResponse = await fetch(
-        "http://localhost:5000/api/auth/send-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: formData.email }),
-        }
-      );
+      const otpResponse = await authAPI.sendOTP({ email: formData.email });
 
-      if (otpResponse.ok) {
+      if (otpResponse.success) {
         setStep("verify");
         setOtpSent(true);
         toast.success("OTP sent to your email");
       } else {
-        const errorData = await otpResponse.json();
-        toast.error(errorData.message || "Failed to send OTP");
+        toast.error(otpResponse.message || "Failed to send OTP");
       }
     } catch (error) {
       console.error("OTP sending error:", error);
@@ -162,45 +153,32 @@ export default function RegisterPage() {
 
     try {
       // Verify OTP
-      const verifyResponse = await fetch(
-        "http://localhost:5000/api/auth/verify-otp",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            otp,
-          }),
-        }
-      );
-
-      const verifyData = await verifyResponse.json();
-
-      if (!verifyResponse.ok) {
-        toast.error(verifyData.message || "Invalid OTP");
-        setIsLoading(false);
-        return;
-      }
-
-      // OTP verified, proceed with registration
-      const registrationData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+      const verifyResponse = await authAPI.verifyOTP({
         email: formData.email,
-        phoneNumber: formData.phoneNumber.trim() || undefined, // Convert empty string to undefined
-        role: formData.role,
-        password: formData.password,
-      };
-      
-      console.log('Registration data being sent:', registrationData);
-      
-      const result = await register(registrationData);
-      
-      if (result.success) {
-        toast.success("Registration successful!");
-        // The redirect will be handled by the useEffect above
+        otp,
+      });
+
+      if (verifyResponse.success) {
+        // OTP verified, proceed with registration
+        const registrationData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber.trim() || undefined, // Convert empty string to undefined
+          role: formData.role,
+          password: formData.password,
+        };
+        
+        console.log('Registration data being sent:', registrationData);
+        
+        const result = await register(registrationData);
+        
+        if (result.success) {
+          toast.success("Registration successful!");
+          // The redirect will be handled by the useEffect above
+        }
+      } else {
+        toast.error(verifyResponse.message || "Invalid OTP");
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -213,19 +191,12 @@ export default function RegisterPage() {
   const handleResendOTP = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/auth/send-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: formData.email }),
-      });
+      const response = await authAPI.sendOTP({ email: formData.email });
 
-      if (response.ok) {
+      if (response.success) {
         toast.success("New OTP sent to your email");
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || "Failed to resend OTP");
+        toast.error(response.message || "Failed to resend OTP");
       }
     } catch (error) {
       console.error("Resend OTP error:", error);

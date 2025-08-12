@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authAPI } from '@/lib/api';
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('');
@@ -40,29 +41,20 @@ function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp, password }),
-      });
+      const response = await authAPI.resetPassword({ email, otp, password });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.message) {
         toast.success('Password reset successfully! You can now login with your new password.');
         // Redirect to login page
         setTimeout(() => {
           router.push('/auth/login');
         }, 2000);
       } else {
-        const errorMsg = data.error || data.message || 'Password reset failed';
-        toast.error(errorMsg);
+        toast.error('Password reset failed');
       }
     } catch (error) {
       console.error('Reset password error:', error);
-      toast.error('An error occurred during password reset');
+      toast.error(error.message || 'An error occurred during password reset');
     } finally {
       setIsLoading(false);
     }

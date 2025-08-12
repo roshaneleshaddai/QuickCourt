@@ -6,6 +6,7 @@ import Link from 'next/link';
 import OTPVerification from '../../../components/OTPVerification';
 import toast from 'react-hot-toast';
 import Header from '../../../components/Header';
+import { authAPI } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -25,37 +26,22 @@ export default function ForgotPasswordPage() {
 
     try {
       // Check if user exists
-      const response = await fetch('http://localhost:5000/api/auth/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      });
+      const response = await authAPI.checkEmail({ email: email.trim() });
 
-      const data = await response.json();
-
-      if (!data.exists) {
+      if (!response.exists) {
         toast.error('No account found with this email address');
         setIsLoading(false);
         return;
       }
 
       // Send OTP
-      const otpResponse = await fetch('http://localhost:5000/api/auth/send-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      });
+      const otpResponse = await authAPI.sendOTP({ email: email.trim() });
 
-      if (otpResponse.ok) {
+      if (otpResponse.success) {
         setStep('verify');
         toast.success('Password reset OTP sent to your email');
       } else {
-        const errorData = await otpResponse.json();
-        toast.error(errorData.error || 'Failed to send OTP');
+        toast.error(otpResponse.error || 'Failed to send OTP');
       }
     } catch (error) {
       console.error('Request OTP error:', error);
