@@ -51,7 +51,7 @@ export default function FacilitiesManagement() {
       email: "",
       website: "",
     },
-    sports: [{ sport: null, courts: [] }], // Start with one empty sport
+    sports: [], // Start with empty sports array
     amenities: [],
     images: [], // Add images array
     operatingHours: {
@@ -156,8 +156,96 @@ export default function FacilitiesManagement() {
 
   const handleAddFacility = async (e) => {
     e.preventDefault();
+    
+    // Validate form data before submission
+    if (!formData.name.trim()) {
+      toast.error("Facility name is required");
+      return;
+    }
+    
+    if (!formData.address.street.trim() || !formData.address.city.trim() || 
+        !formData.address.state.trim() || !formData.address.zipCode.trim() || 
+        !formData.address.country.trim()) {
+      toast.error("All address fields are required");
+      return;
+    }
+    
+    if (formData.sports.length === 0) {
+      toast.error("At least one sport must be selected");
+      return;
+    }
+    
+    // Check if any images are still uploading
+    if (formData.images && Array.isArray(formData.images)) {
+      const uploadingImages = formData.images.filter(img => img.uploading);
+      if (uploadingImages.length > 0) {
+        toast.error("Please wait for all images to finish uploading before submitting");
+        return;
+      }
+    }
+    
+    // Validate that each sport has valid data
+    for (let i = 0; i < formData.sports.length; i++) {
+      const sport = formData.sports[i];
+      if (!sport.sport || !sport.sport._id) {
+        toast.error(`Sport ${i + 1} must have a valid sport selected`);
+        return;
+      }
+      if (!sport.courts || sport.courts.length === 0) {
+        toast.error(`Sport ${i + 1} must have at least one court`);
+        return;
+      }
+      
+      // Validate each court
+      for (let j = 0; j < sport.courts.length; j++) {
+        const court = sport.courts[j];
+        if (!court.name || !court.hourlyRate) {
+          toast.error(`Court ${j + 1} in Sport ${i + 1} must have a name and hourly rate`);
+          return;
+        }
+      }
+    }
+    
     try {
-      const newFacility = await facilityOwnerAPI.create(formData);
+      // Prepare the data for submission
+      const submissionData = {
+        ...formData,
+        // Extract only the URLs from the images array
+        images: Array.isArray(formData.images) 
+          ? formData.images
+              .filter(img => img && img.url && !img.uploading) // Only include uploaded images
+              .map(img => img.url) // Extract just the URL
+          : [], // Fallback to empty array if images is not an array
+        sports: formData.sports.map(sport => ({
+          sport: sport.sport._id, // Send just the ID
+          courts: sport.courts.map(court => ({
+            name: court.name,
+            type: court.type || 'indoor',
+            surface: court.surface || '',
+            capacity: court.capacity || 2,
+            hourlyRate: parseFloat(court.hourlyRate),
+            isActive: true,
+            amenities: court.amenities || [],
+            // Extract only the URLs from court images
+            images: Array.isArray(court.images) 
+              ? court.images
+                  .filter(img => img && img.url && !img.uploading)
+                  .map(img => img.url)
+              : []
+          }))
+        }))
+      };
+      
+      console.log('Original formData images:', formData.images);
+      console.log('Original formData images type:', typeof formData.images);
+      console.log('Original formData images isArray:', Array.isArray(formData.images));
+      if (Array.isArray(formData.images)) {
+        console.log('First image structure:', formData.images[0]);
+      }
+      console.log('Processed submissionData images:', submissionData.images);
+      console.log('Submitting facility data:', submissionData);
+      
+      const newFacility = await facilityOwnerAPI.create(submissionData);
       setFacilities([...facilities, newFacility]);
       setShowAddModal(false);
       resetForm();
@@ -254,7 +342,7 @@ export default function FacilitiesManagement() {
         email: "",
         website: "",
       },
-      sports: [{ sport: null, courts: [] }], // Start with one empty sport
+      sports: [], // Start with empty sports array
       amenities: [],
       images: [], // Reset images
       operatingHours: {

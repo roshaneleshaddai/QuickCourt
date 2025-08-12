@@ -597,34 +597,34 @@ export default function FacilitiesPage() {
       <div className="p-4">
         {/* Venue name and rating */}
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900">{facility.name}</h3>
+          <h3 className="font-semibold text-gray-900 text-base">{facility.name}</h3>
           <div className="flex items-center">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="ml-1 text-sm text-gray-700 font-medium">
+            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+            <span className="ml-1 text-sm text-gray-800 font-semibold">
               {facility.rating.average} ({facility.rating.count})
             </span>
           </div>
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-gray-700 mb-2">
+        <div className="flex items-center text-gray-800 mb-2">
           <MapPin className="h-4 w-4 mr-1 text-red-500" />
-          <span className="text-sm font-medium">{facility.location}</span>
+          <span className="text-sm font-semibold">{facility.location}</span>
         </div>
 
         {/* Price */}
-        <div className="flex items-center text-gray-800 mb-3">
-          <span className="text-sm font-semibold">
+        <div className="flex items-center text-green-700 mb-3">
+          <span className="text-sm font-bold">
             ₹ {facility.price} per hour
           </span>
         </div>
 
         {/* Sport and type tags */}
         <div className="flex flex-wrap gap-2 mb-3">
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded font-semibold">
             {facility.sport}
           </span>
-          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-semibold">
             {facility.type}
           </span>
         </div>
@@ -634,7 +634,7 @@ export default function FacilitiesPage() {
           {facility.tags.map((tag, index) => (
             <span
               key={index}
-              className={`px-2 py-1 text-xs rounded ${
+              className={`px-2 py-1 text-xs rounded font-semibold ${
                 tag === "Top Rated"
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-orange-100 text-orange-800"
@@ -648,7 +648,7 @@ export default function FacilitiesPage() {
         {/* View Details button */}
         <Link
           href={`/facilities/${facility._id}`}
-          className="block w-full bg-green-500 text-white text-center py-2 rounded-md hover:bg-green-600 transition-colors font-medium"
+          className="block w-full bg-green-600 text-white text-center py-3 rounded-md hover:bg-green-700 transition-colors font-semibold text-sm shadow-sm"
         >
           View Details
         </Link>
@@ -740,7 +740,7 @@ export default function FacilitiesPage() {
           </div>
         )}
 
-        <p className="text-xs text-gray-700 mt-2 font-medium">
+        <p className="text-xs text-gray-800 mt-2 font-semibold">
           *clicking this will open a side panel for displaying all the same
           filters as in desktop
         </p>
@@ -903,7 +903,7 @@ export default function FacilitiesPage() {
                 )}
 
                 {/* Results count */}
-                <div className="text-center text-gray-700 font-medium mt-4">
+                <div className="text-center text-gray-800 font-semibold mt-4">
                   Showing {(currentPage - 1) * 12 + 1} to{" "}
                   {Math.min(currentPage * 12, totalItems)} of {totalItems}{" "}
                   venues

@@ -323,22 +323,14 @@ export default function Home() {
 
               {/* Right Column - Hero Image (Desktop Only) */}
               <div className="hidden lg:block">
-                <div className="relative w-full h-96 animate-hover">
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center border-2 border-dashed border-blue-300 float-animation">
-                    <div className="text-center text-blue-600">
-                      <div className="text-8xl mb-6">🖼</div>
-                      <p className="text-2xl font-bold mb-2">Hero Image</p>
-                      <p className="text-lg opacity-75">
-                        Insert your amazing hero visual here
-                      </p>
-                    </div>
-                  </div>
+                <div className="relative w-full h-full animate-hover rounded-3xl">
+                   <Image src="https://res.cloudinary.com/dve8hh1d8/image/upload/fl_preserve_transparency/v1754966561/ChatGPT_Image_Aug_12_2025_08_08_34_AM_zxwzo8.jpg?_s=public-apps" alt="Hero Image" width={1000} height={1000} className="rounded-2xl" />
                 </div>
               </div>
             </div>
 
-            {/* Desktop Search Bar - Fixed Position */}
-            <div className="hidden lg:block mt-16 w-full max-w-4xl mx-auto">
+            
+            {/* <div className="hidden lg:block mt-16 w-full max-w-4xl mx-auto">
               <div className="bg-white/95 backdrop-blur-sm border border-green-200 rounded-3xl p-4 flex items-center gap-4 shadow-2xl animate-lift">
                 <div className="flex-1 relative">
                   <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500 h-6 w-6 pulse-animation" />
@@ -378,10 +370,11 @@ export default function Home() {
                   Search
                 </button>
               </div>
-            </div>
-          </div>
+            </div> */}
+          </div>   
         </div>
       </section>
+    
 
       {/* Book Venues Section */}
       <section className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
@@ -593,16 +586,7 @@ export default function Home() {
               </p>
               <div className="w-24 h-1 bg-gradient-to-r from-green-500 to-green-400 mx-auto rounded-full"></div>
 
-              {/* Debug information - remove in production */}
-              {process.env.NODE_ENV === "development" && (
-                <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left text-sm">
-                  <h4 className="font-semibold mb-2">Debug Info:</h4>
-                  <p>Sports loaded: {sports.length}</p>
-                  <p>Facilities loaded: {facilities.length}</p>
-                  <p>Loading state: {loading ? "Yes" : "No"}</p>
-                  {error && <p className="text-red-600">Error: {error}</p>}
-                </div>
-              )}
+              
             </div>
 
             {/* Enhanced Sports Grid */}
@@ -679,75 +663,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Enhanced Green Footer */}
-      <footer className="bg-gradient-to-br from-gray-900 via-green-900 to-gray-800 text-white py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/20 to-transparent"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="content-center">
-            <div className="text-center mb-12">
-              <h3 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-green-200 bg-clip-text text-transparent mb-6">
-                🚀 Ready to Play?
-              </h3>
-              <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed">
-                Join thousands of athletes who have found their perfect sports
-                venues through
-                <span className="font-semibold text-green-400">
-                  {" "}
-                  QuickCourt
-                </span>
-              </p>
-
-            </div>
-
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-12">
-              <div className="animate-lift">
-                <div className="text-4xl font-bold text-green-400 mb-2">
-                  500+
-                </div>
-                <div className="text-gray-300 text-lg">Premium Venues</div>
-              </div>
-              <div className="animate-lift">
-                <div className="text-4xl font-bold text-emerald-400 mb-2">
-                  10K+
-                </div>
-                <div className="text-gray-300 text-lg">Active Players</div>
-              </div>
-              <div className="animate-lift">
-                <div className="text-4xl font-bold text-teal-400 mb-2">50+</div>
-                <div className="text-gray-300 text-lg">Sports Available</div>
-              </div>
-              <div className="animate-lift">
-                <div className="text-4xl font-bold text-yellow-400 mb-2">
-                  4.8★
-                </div>
-                <div className="text-gray-300 text-lg">User Rating</div>
-        </div>
-            </div>
-
-            {/* Call to Action */}
-            <div className="text-center mb-12">
-              <Link
-                href="/facilities"
-                className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-400 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-green-600 hover:to-green-500 transition-all animate-button shadow-2xl"
-              >
-                <span className="mr-3">🏆</span>
-                Start Playing Today
-                <span className="ml-3">→</span>
-              </Link>
-            </div>
-
-
-            <div className="pt-8 border-t border-green-700/30 text-center">
-              <p className="text-gray-400 text-lg">
-                &copy; 2025 QuickCourt. Made with
-                <span className="text-green-400 mx-1">💚</span>
-                for sports enthusiasts.
-                      </p>
-                    </div>
-                  </div>
-        </div>
-      </footer>
+     
     </div>
   );
 }
