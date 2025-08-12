@@ -31,10 +31,19 @@ export default function ReviewDisplay({ facilityId }) {
         }
       } catch (error) {
         console.error('Error fetching reviews:', error)
-        console.error('Error details:', error.message)
         
-        // Don't show error toast for "no reviews" - this is normal
-        if (!error.message.includes('No reviews found')) {
+        // Handle different types of errors gracefully
+        if (error.message.includes('Route not found')) {
+          console.log('Reviews API endpoint not available yet - this is normal during development')
+          // Don't show error for missing endpoint
+        } else if (error.message.includes('No reviews found')) {
+          console.log('No reviews found for this facility - this is normal')
+          // Don't show error for no reviews
+        } else if (error.message.includes('Network error')) {
+          console.log('Network error - backend server might not be running')
+          // Don't show error for network issues during development
+        } else {
+          console.error('Error details:', error.message)
           toast.error('Failed to load reviews')
         }
         

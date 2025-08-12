@@ -48,17 +48,12 @@ export default function BookingPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // Redirect facility owners to their appropriate page
-  useEffect(() => {
-    if (
-      !authLoading &&
-      isAuthenticated &&
-      user &&
-      user.role === "facility_owner"
-    ) {
-      router.push("/facilityowner");
-    }
-  }, [isAuthenticated, authLoading, user, router]);
+  // // Redirect facility owners to their appropriate page
+  // useEffect(() => {
+  //   if (!authLoading && isAuthenticated && user && user.role === 'facility_owner') {
+  //     router.push('/facilityowner')
+  //   }
+  // }, [isAuthenticated, authLoading, user, router])
 
   // Helper function to format date consistently and avoid timezone issues
   const formatDateToLocalString = (date) => {

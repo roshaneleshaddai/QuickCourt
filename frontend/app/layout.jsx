@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/AuthContext'
+import Chatbot from '@/components/Chatbot'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <AuthProvider>
           {children}
+          <Chatbot />
           <Toaster 
             position="top-right"
             toastOptions={{

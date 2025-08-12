@@ -25,6 +25,11 @@ async function apiCall(endpoint, options = {}) {
     defaultOptions.headers.Authorization = `Bearer ${token}`;
   }
 
+  // If body is FormData, remove Content-Type header to let browser set it with boundary
+  if (options.body instanceof FormData) {
+    delete defaultOptions.headers["Content-Type"];
+  }
+
   try {
     console.log("Making API request to:", url);
     const response = await fetch(url, defaultOptions);
@@ -462,3 +467,63 @@ export const reviewsAPI = {
 
 // Health check
 export const healthCheck = () => apiCall("/health");
+
+// Chatbot API calls
+export const chatbotAPI = {
+  // Get chatbot suggestions
+  getSuggestions: () => apiCall("/chatbot/suggestions"),
+
+  // Send chat message
+  sendMessage: (message, context = {}) =>
+    apiCall("/chatbot/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, context }),
+    }),
+
+  // Handle quick actions
+  quickAction: (action, data = {}) =>
+    apiCall("/chatbot/quick-action", {
+      method: "POST",
+      body: JSON.stringify({ action, data }),
+    }),
+};
+
+// Image Upload API calls
+export const uploadAPI = {
+  // Upload single image
+  uploadSingle: (imageFile) => {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    return apiCall("/upload/single", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  // Upload multiple images
+  uploadMultiple: (imageFiles) => {
+    const formData = new FormData();
+    imageFiles.forEach((file, index) => {
+      formData.append("images", file);
+    });
+
+    return apiCall("/upload/multiple", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  // Delete image from Cloudinary
+  deleteImage: (publicId) =>
+    apiCall(`/upload/${publicId}`, {
+      method: "DELETE",
+    }),
+
+  // Transform image URL
+  transformImage: (imageUrl, transformations = {}) =>
+    apiCall("/upload/transform", {
+      method: "POST",
+      body: JSON.stringify({ imageUrl, transformations }),
+    }),
+};

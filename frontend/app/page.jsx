@@ -74,19 +74,34 @@ export default function Home() {
   };
 
   const getTagClass = (sportName) => {
-    const name = sportName?.toLowerCase() || "";
-    if (name.includes("badminton")) return "tag-badminton";
-    if (name.includes("football") || name.includes("soccer"))
-      return "tag-football";
-    if (name.includes("cricket")) return "tag-cricket";
-    if (name.includes("swimming")) return "tag-swimming";
-    if (name.includes("tennis") && !name.includes("table")) return "tag-tennis";
-    if (name.includes("table tennis") || name.includes("ping pong"))
-      return "tag-table-tennis";
-    if (name.includes("basketball")) return "tag-basketball";
-    if (name.includes("volleyball")) return "tag-volleyball";
-    return "bg-gray-500 text-white";
-  };
+    const name = sportName?.toLowerCase() || ''
+    if (name.includes('badminton')) return 'tag-badminton'
+    if (name.includes('football') || name.includes('soccer')) return 'tag-football'
+    if (name.includes('cricket')) return 'tag-cricket'
+    if (name.includes('swimming')) return 'tag-swimming'
+    if (name.includes('tennis') && !name.includes('table')) return 'tag-tennis'
+    if (name.includes('table tennis') || name.includes('ping pong')) return 'tag-table-tennis'
+    if (name.includes('basketball')) return 'tag-basketball'
+    if (name.includes('volleyball')) return 'tag-volleyball'
+    return 'bg-gray-500 text-white'
+  }
+
+  // Function to get the hourly rate from facility's courts
+  const getFacilityHourlyRate = (facility) => {
+    if (!facility.sports || !Array.isArray(facility.sports) || facility.sports.length === 0) {
+      return '500'
+    }
+    
+    // Get the first sport's courts
+    const firstSport = facility.sports[0]
+    if (!firstSport.courts || !Array.isArray(firstSport.courts) || firstSport.courts.length === 0) {
+      return '500'
+    }
+    
+    // Get the hourly rate from the first court
+    const firstCourt = firstSport.courts[0]
+    return firstCourt.hourlyRate || '500'
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,43 +145,41 @@ export default function Home() {
           );
 
           // Transform the data to match the expected structure
-          const processedFacilities = facilitiesData.facilities.map(
-            (facility) => {
-              console.log("Processing facility:", facility.name, facility);
-
-              // Extract sport information properly
-              let primarySport = "General Sports";
-              if (facility.sports && facility.sports.length > 0) {
-                const firstSport = facility.sports[0];
-                if (firstSport.sport && firstSport.sport.name) {
-                  primarySport = firstSport.sport.name;
-                } else if (typeof firstSport === "string") {
-                  primarySport = firstSport;
-                }
+          const processedFacilities = facilitiesData.facilities.map(facility => {
+            console.log('Processing facility:', facility.name, facility);
+            
+            // Extract sport information properly
+            let primarySport = 'General Sports';
+            if (facility.sports && facility.sports.length > 0) {
+              const firstSport = facility.sports[0];
+              if (firstSport.sport && firstSport.sport.name) {
+                primarySport = firstSport.sport.name;
+              } else if (typeof firstSport === 'string') {
+                primarySport = firstSport;
               }
-
-              return {
-                ...facility,
-                // Ensure required fields have fallback values
-                name: facility.name || "Premium Sports Complex",
-                rating: {
-                  average: facility.rating?.average || 4.5,
-                  count: facility.rating?.count || 0,
-                },
-                address: {
-                  city: facility.address?.city || "Ahmedabad",
-                  street: facility.address?.street || "",
-                  state: facility.address?.state || "",
-                  zipCode: facility.address?.zipCode || "",
-                },
-                hourlyRate: facility.hourlyRate || 500,
-                // Ensure sports array is properly structured
-                sports: Array.isArray(facility.sports) ? facility.sports : [],
-                // Store the extracted primary sport for easy access
-                primarySport: primarySport,
-              };
             }
-          );
+            
+            return {
+              ...facility,
+              // Ensure required fields have fallback values
+              name: facility.name || 'Premium Sports Complex',
+              rating: {
+                average: facility.rating?.average || 4.5,
+                count: facility.rating?.count || 0
+              },
+              address: {
+                city: facility.address?.city || 'Ahmedabad',
+                street: facility.address?.street || '',
+                state: facility.address?.state || '',
+                zipCode: facility.address?.zipCode || ''
+              },
+              // hourlyRate will be calculated dynamically using getFacilityHourlyRate function
+              // Ensure sports array is properly structured
+              sports: Array.isArray(facility.sports) ? facility.sports : [],
+              // Store the extracted primary sport for easy access
+              primarySport: primarySport
+            };
+          });
 
           console.log("Processed facilities:", processedFacilities);
           setFacilities(processedFacilities);
@@ -186,7 +199,6 @@ export default function Home() {
         setFacilities([]);
       } finally {
         setLoading(false);
-
       }
     };
 
@@ -441,35 +453,38 @@ export default function Home() {
                     );
 
                     return (
-                      <div
-                        key={facility._id}
-                        className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start"
-                      >
-                        {/* Genre-colored Image Placeholder */}
-                        <div
-                          className={`h-48 ${getGenreClass(
-                            sportName
-                          )} flex items-center justify-center relative`}
-                        >
-                          <div className="text-center text-white">
-                            <div className="text-6xl mb-2 float-animation">
-                              🖼
+                      <div key={facility._id} className="lg:min-w-[320px] lg:max-w-[320px] bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-hover lg:snap-start">
+                                                {/* Facility Image or Genre-colored Placeholder */}
+                        <div className={`h-48 ${getGenreClass(sportName)} relative overflow-hidden`}>
+                          {facility.images && facility.images.length > 0 ? (
+                            <img
+                              src={facility.images[0]}
+                              alt={facility.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                console.log('Image failed to load:', facility.images[0]);
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                              onLoad={() => {
+                                console.log('Image loaded successfully:', facility.images[0]);
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-full h-full ${facility.images && facility.images.length > 0 ? 'hidden' : 'flex'} items-center justify-center`}>
+                            <div className="text-center text-white">
+                              <div className="text-6xl mb-2 float-animation">🏟️</div>
+                              <p className="font-bold">Venue Image</p>
+                              <p className="text-sm opacity-90">{sportName} Facility</p>
                             </div>
-                            <p className="font-bold">Venue Image</p>
-                            <p className="text-sm opacity-90">
-                              {sportName} Facility
-                            </p>
                           </div>
                           <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
                             <div className="flex items-center text-white">
                               <Star className="h-4 w-4 fill-current mr-1" />
-                              <span className="font-bold text-sm">
-                                {facility.rating?.average || "4.8"}
-                              </span>
+                              <span className="text-sm font-bold">{facility.rating?.average || '4.8'}</span>
                             </div>
                           </div>
                         </div>
-
 
                         {/* Venue Info */}
                         <div className="p-6">
@@ -507,11 +522,9 @@ export default function Home() {
                           {/* Book Button with genre colors */}
                           <Link
                             href={`/book/${facility._id}`}
-                            className={`block w-full ${getGenreClass(
-                              sportName
-                            )} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
+                            className={`block w-full ${getGenreClass(sportName)} text-center py-3 rounded-xl font-bold transition-all animate-button shadow-lg`}
                           >
-                            Book Now - ₹{facility.hourlyRate || "500"}/hr
+                            Book Now - ₹{getFacilityHourlyRate(facility)}/hr
                           </Link>
                         </div>
                       </div>

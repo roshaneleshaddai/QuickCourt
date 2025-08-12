@@ -51,10 +51,26 @@ app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/sports", require("./routes/sports"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/upload", require("./routes/upload")); // Add upload routes
+app.use("/api/reviews", require("./routes/reviews")); // Add reviews routes
+app.use("/api/users", require("./routes/users")); // Add users routes
+app.use("/api/chatbot", require("./routes/chatbot"));
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "QuickCourt API is running" });
+});
+
+// Additional health check endpoints for debugging
+app.get("/api/reviews/health", (req, res) => {
+  res.json({ status: "OK", message: "Reviews API is running" });
+});
+
+app.get("/api/users/health", (req, res) => {
+  res.json({ status: "OK", message: "Users API is running" });
+});
+
+app.get("/api/chatbot/health", (req, res) => {
+  res.json({ status: "OK", message: "Chatbot API is running" });
 });
 
 // Error handling middleware

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { uploadAPI } from '@/lib/api'
 
 export default function ImageUpload({ 
   images = [], 
@@ -61,23 +62,7 @@ export default function ImageUpload({
         const imageData = newImages[i]
         
         try {
-          const formData = new FormData()
-          formData.append('image', imageData.file)
-
-          const response = await fetch('/api/upload/single', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: formData
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || `Upload failed: ${response.status} ${response.statusText}`)
-          }
-
-          const result = await response.json()
+          const result = await uploadAPI.uploadSingle(imageData.file)
           
           // Update the image with Cloudinary data
           const updatedImages = [...images, ...newImages]

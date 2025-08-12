@@ -50,6 +50,23 @@ export default function FacilitiesPage() {
   // Fetch sports from API for dynamic filtering
   const [sports, setSports] = useState([]);
 
+  // Function to get the hourly rate from facility's courts
+  const getFacilityHourlyRate = (facility) => {
+    if (!facility.sports || !Array.isArray(facility.sports) || facility.sports.length === 0) {
+      return 500;
+    }
+    
+    // Get the first sport's courts
+    const firstSport = facility.sports[0];
+    if (!firstSport.courts || !Array.isArray(firstSport.courts) || firstSport.courts.length === 0) {
+      return 500;
+    }
+    
+    // Get the hourly rate from the first court
+    const firstCourt = firstSport.courts[0];
+    return firstCourt.hourlyRate || 500;
+  };
+
   // Debounce search term to prevent excessive API calls
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -163,7 +180,7 @@ export default function FacilitiesPage() {
                 count: facility.rating?.count || 0,
               },
               location: facility.address?.city || "Ahmedabad",
-              price: facility.hourlyRate || 500,
+              price: getFacilityHourlyRate(facility),
               sport: primarySport,
               type: sportType,
               tags:
@@ -555,11 +572,24 @@ export default function FacilitiesPage() {
 
   const VenueCard = ({ facility }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      {/* Image placeholder */}
-      <div className="h-48 bg-gray-100 flex items-center justify-center border-b">
-        <div className="text-center text-gray-600">
-          <div className="text-4xl mb-2">🖼️</div>
-          <span className="text-sm">Image</span>
+      {/* Facility Image or Placeholder */}
+      <div className="h-48 bg-gray-100 border-b overflow-hidden">
+        {facility.image ? (
+          <img
+            src={facility.image}
+            alt={facility.name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div className={`w-full h-full ${facility.image ? 'hidden' : 'flex'} items-center justify-center`}>
+          <div className="text-center text-gray-400">
+            <div className="text-4xl mb-2">🏟️</div>
+            <span className="text-sm">Venue Image</span>
+          </div>
         </div>
       </div>
 
@@ -636,8 +666,6 @@ export default function FacilitiesPage() {
       <div className="lg:hidden bg-white border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-900">
-            Sports Venues in Ahmedabad:
-            <br />
             Discover and Book Nearby Venues
           </h1>
           <button
@@ -732,7 +760,7 @@ export default function FacilitiesPage() {
             {/* Desktop Title */}
             <div className="hidden lg:block mb-6">
               <h1 className="text-xl font-semibold text-gray-900">
-                Sports Venues in Ahmedabad: Discover and Book Nearby Venues
+                 Discover and Book Nearby Venues
               </h1>
 
               {/* Active Filters Indicator */}
