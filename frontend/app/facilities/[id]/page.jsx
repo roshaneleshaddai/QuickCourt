@@ -173,7 +173,7 @@ export default function FacilityDetailPage() {
 
             {/* Sports Available Section */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-lg font-semibold mb-4">Sports Available</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">Sports Available</h3>
               <p className="text-sm text-gray-600 mb-4">Click on sports to view pricing and court details</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {Array.isArray(facility.sports) && facility.sports.length > 0 ? (
@@ -236,7 +236,7 @@ export default function FacilityDetailPage() {
 
             {/* Amenities Section */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-lg font-semibold mb-4">Amenities</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">Amenities</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Array.isArray(facility.amenities) && facility.amenities.length > 0 ? (
                   facility.amenities.map((amenity, index) => {
@@ -267,7 +267,7 @@ export default function FacilityDetailPage() {
 
             {/* About Venue Section */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h3 className="text-lg font-semibold mb-4">About Venue</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">About Venue</h3>
               <div className="space-y-3 text-gray-700">
                 {facility.description && (
                   <p className="leading-relaxed">{facility.description}</p>
