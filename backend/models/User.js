@@ -30,12 +30,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       validate: {
-        validator: function(v) {
-          if (!v || v.trim() === '') return true; // Allow empty strings
+        validator: function (v) {
+          if (!v || v.trim() === "") return true; // Allow empty strings
           return /^[\+]?[1-9][\d]{0,15}$/.test(v);
         },
-        message: 'Please enter a valid phone number'
-      }
+        message: "Please enter a valid phone number",
+      },
     },
     password: {
       type: String,
@@ -59,7 +59,19 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
-      },
+    },
+    adminNotes: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Admin notes cannot exceed 500 characters"],
+    },
+    statusUpdatedAt: {
+      type: Date,
+    },
+    statusUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     emailVerified: {
       type: Boolean,
       default: false,

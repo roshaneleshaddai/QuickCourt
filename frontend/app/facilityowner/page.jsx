@@ -29,6 +29,14 @@ export default function FacilityOwnerDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Auto-refresh dashboard data every 30 seconds
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing dashboard data...');
+      fetchDashboardData();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
@@ -36,8 +44,11 @@ export default function FacilityOwnerDashboard() {
       setLoading(true);
       setError(null);
 
+      console.log('Fetching dashboard data...');
+
       // Fetch dashboard stats
       const statsData = await facilityOwnerAPI.getDashboardStats();
+      console.log('Dashboard stats received:', statsData);
       setStats(statsData);
 
       // Fetch recent bookings
@@ -45,6 +56,7 @@ export default function FacilityOwnerDashboard() {
         limit: 5,
         sort: "-createdAt",
       });
+      console.log('Recent bookings received:', bookingsData);
       setRecentBookings(bookingsData.bookings || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -65,9 +77,9 @@ export default function FacilityOwnerDashboard() {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(amount);
   };
 
@@ -122,12 +134,25 @@ export default function FacilityOwnerDashboard() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {user?.firstName}!
-        </h1>
-        <p className="text-gray-600">
-          Here's what's happening with your facilities today.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back, {user?.firstName}!
+            </h1>
+            <p className="text-gray-600">
+              Here's what's happening with your facilities today.
+            </p>
+          </div>
+          <button
+            onClick={fetchDashboardData}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -170,6 +195,11 @@ export default function FacilityOwnerDashboard() {
               <p className="text-2xl font-bold text-gray-900">
                 {formatCurrency(stats.totalEarnings)}
               </p>
+              {process.env.NODE_ENV === 'development' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Raw: {stats.totalEarnings} | Type: {typeof stats.totalEarnings}
+                </p>
+              )}
             </div>
           </div>
         </div>

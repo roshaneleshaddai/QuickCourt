@@ -34,7 +34,7 @@ export default function RegisterPage() {
       if (user.role === 'facility_owner') {
         router.push('/facilityowner')
       } else if (user.role === 'admin') {
-        router.push('/admin') // You can add admin dashboard later
+        router.push('/admin')
       } else {
         router.push('/dashboard')
       }
@@ -175,14 +175,18 @@ export default function RegisterPage() {
       }
 
       // OTP verified, proceed with registration
-      const result = await register({
+      const registrationData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        phoneNumber: formData.phoneNumber,
+        phoneNumber: formData.phoneNumber.trim() || undefined, // Convert empty string to undefined
         role: formData.role,
         password: formData.password
-      })
+      };
+      
+      console.log('Registration data being sent:', registrationData);
+      
+      const result = await register(registrationData);
       
       if (result.success) {
         toast.success('Registration successful!')

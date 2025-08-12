@@ -4,7 +4,7 @@ const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const { sendOTPEmail } = require("../utils/emailSender");
-const otpGenerator = require('otp-generator');
+const otpGenerator = require("otp-generator");
 
 const router = express.Router();
 
@@ -16,19 +16,19 @@ const generateToken = (userId) => {
 };
 
 // @route   POST /api/auth/check-email
-router.post('/check-email', async (req, res) => {
+router.post("/check-email", async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
     res.status(200).json({ exists: !!user });
   } catch (error) {
-    console.error('Email check error:', error);
-    res.status(500).json({ error: 'Error checking email' });
+    console.error("Email check error:", error);
+    res.status(500).json({ error: "Error checking email" });
   }
 });
 
 // @route   POST /api/auth/send-otp
-router.post('/send-otp', async (req, res) => {
+router.post("/send-otp", async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -37,7 +37,7 @@ router.post('/send-otp', async (req, res) => {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
-      specialChars: false
+      specialChars: false,
     });
 
     // Save OTP to database
@@ -47,21 +47,21 @@ router.post('/send-otp', async (req, res) => {
     // Send OTP via email
     await sendOTPEmail(email, otp);
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true,
-      message: 'OTP sent successfully'
+      message: "OTP sent successfully",
     });
   } catch (error) {
-    console.error('OTP sending error:', error);
-    res.status(500).json({ 
+    console.error("OTP sending error:", error);
+    res.status(500).json({
       success: false,
-      error: 'Failed to send OTP' 
+      error: "Failed to send OTP",
     });
   }
 });
 
 // @route   POST /api/auth/verify-otp
-router.post('/verify-otp', async (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -73,26 +73,26 @@ router.post('/verify-otp', async (req, res) => {
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
-        error: 'OTP not found or expired'
+        error: "OTP not found or expired",
       });
     }
 
     if (otpRecord.otp !== otp) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid OTP'
+        error: "Invalid OTP",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'OTP verified successfully'
+      message: "OTP verified successfully",
     });
   } catch (error) {
-    console.error('OTP verification error:', error);
+    console.error("OTP verification error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to verify OTP'
+      error: "Failed to verify OTP",
     });
   }
 });
@@ -121,11 +121,11 @@ router.post(
     body("phoneNumber")
       .optional()
       .custom((value) => {
-        if (value && value.trim() !== '') {
+        if (value && value.trim() !== "") {
           // Only validate if phone number is provided
           const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
           if (!phoneRegex.test(value)) {
-            throw new Error('Please provide a valid phone number');
+            throw new Error("Please provide a valid phone number");
           }
         }
         return true;
@@ -140,11 +140,27 @@ router.post(
       // Check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log("Registration validation errors:", errors.array());
+        console.log("Request body:", req.body);
         return res.status(400).json({ errors: errors.array() });
       }
 
       const { firstName, lastName, email, password, phoneNumber, role } =
         req.body;
+
+      console.log("Extracted data:", {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        role,
+      });
+      console.log(
+        "Phone number type:",
+        typeof phoneNumber,
+        "Value:",
+        phoneNumber
+      );
 
       // Check if user already exists
       const existingUser = await User.findOne({ email });
@@ -325,7 +341,7 @@ router.post(
         digits: true,
         lowerCaseAlphabets: false,
         upperCaseAlphabets: false,
-        specialChars: false
+        specialChars: false,
       });
 
       // Save OTP to database
@@ -378,13 +394,13 @@ router.post(
 
       if (!otpRecord) {
         return res.status(400).json({
-          error: "OTP not found or expired"
+          error: "OTP not found or expired",
         });
       }
 
       if (otpRecord.otp !== otp) {
         return res.status(400).json({
-          error: "Invalid OTP"
+          error: "Invalid OTP",
         });
       }
 
@@ -392,7 +408,7 @@ router.post(
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(404).json({
-          error: "User not found"
+          error: "User not found",
         });
       }
 
@@ -404,7 +420,7 @@ router.post(
       await OTP.findByIdAndDelete(otpRecord._id);
 
       res.json({
-        message: "Password reset successfully"
+        message: "Password reset successfully",
       });
     } catch (error) {
       console.error("Reset password error:", error);

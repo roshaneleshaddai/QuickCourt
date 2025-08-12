@@ -369,6 +369,66 @@ export const facilityOwnerAPI = {
     ),
 };
 
+// Admin API calls
+export const adminAPI = {
+  // Dashboard statistics
+  getDashboardStats: () => apiCall("/admin/dashboard/stats"),
+
+  // Facility approval management
+  getPendingFacilities: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/admin/facilities/pending?${queryString}`);
+  },
+
+  approveFacility: (facilityId, status, adminNotes) =>
+    apiCall(`/admin/facilities/${facilityId}/approve`, {
+      method: "PUT",
+      body: JSON.stringify({ status, adminNotes }),
+    }),
+
+  // User management
+  getUsers: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/admin/users?${queryString}`);
+  },
+
+  updateUserStatus: (userId, isActive, adminNotes) =>
+    apiCall(`/admin/users/${userId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ isActive, adminNotes }),
+    }),
+
+  getUserBookings: (userId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/admin/users/${userId}/bookings?${queryString}`);
+  },
+
+  // Reports and moderation
+  getReports: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/admin/reports?${queryString}`);
+  },
+
+  // Sports management
+  getSports: () => apiCall("/admin/sports"),
+
+  // Analytics and charts
+  getBookingTrends: (period = "7d") =>
+    apiCall(`/admin/analytics/booking-trends?period=${period}`),
+
+  getUserRegistrationTrends: (period = "7d") =>
+    apiCall(`/admin/analytics/user-registration-trends?period=${period}`),
+
+  getFacilityApprovalTrends: (period = "30d") =>
+    apiCall(`/admin/analytics/facility-approval-trends?period=${period}`),
+
+  getSportsActivity: (period = "30d") =>
+    apiCall(`/admin/analytics/sports-activity?period=${period}`),
+
+  getEarningsSimulation: (period = "30d") =>
+    apiCall(`/admin/analytics/earnings-simulation?period=${period}`),
+};
+
 // Reviews API calls
 export const reviewsAPI = {
   // Get all reviews for a facility
@@ -379,7 +439,7 @@ export const reviewsAPI = {
 
   // Create a new review
   create: (reviewData) => {
-    console.log('🚀 reviewsAPI.create called with:', reviewData);
+    console.log("🚀 reviewsAPI.create called with:", reviewData);
     return apiCall("/reviews", {
       method: "POST",
       body: JSON.stringify(reviewData),
