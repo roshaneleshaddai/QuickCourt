@@ -192,7 +192,7 @@ export default function RegisterPage() {
         phoneNumber: formData.phoneNumber.trim() || undefined, // Convert empty string to undefined
         role: formData.role,
         password: formData.password,
-      });
+      };
       
       console.log('Registration data being sent:', registrationData);
       
