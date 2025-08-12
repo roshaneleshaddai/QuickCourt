@@ -310,13 +310,13 @@ export default function FacilitiesPage() {
           <input
             type="text"
             placeholder="Search for venues..."
-            className="w-full px-4 py-3 pr-10 text-gray-700 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-gray-400 transition-colors text-base placeholder-gray-400"
+            className="w-full px-4 py-3 pr-10 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-gray-400 transition-colors text-base placeholder-gray-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           />
           <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-            <Search className="w-5 h-5 text-gray-400" />
+            <Search className="w-5 h-5 text-gray-600" />
           </div>
         </div>
       </div>
@@ -348,7 +348,7 @@ export default function FacilitiesPage() {
           {/* Custom dropdown arrow */}
           <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
             <svg
-              className="w-5 h-5 text-gray-400"
+              className="w-5 h-5 text-gray-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -372,20 +372,20 @@ export default function FacilitiesPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
             <div className="text-center">
-              <span className="text-xs text-gray-500">Min</span>
+              <span className="text-xs text-gray-700 font-medium">Min</span>
               <div
                 className={`text-base font-semibold ${
-                  minPrice > 0 ? "text-green-600" : "text-gray-700"
+                  minPrice > 0 ? "text-green-600" : "text-gray-800"
                 }`}
               >
                 ₹{minPrice}
               </div>
             </div>
             <div className="text-center">
-              <span className="text-xs text-gray-500">Max</span>
+              <span className="text-xs text-gray-700 font-medium">Max</span>
               <div
                 className={`text-base font-semibold ${
-                  maxPrice < 5500 ? "text-green-600" : "text-gray-700"
+                  maxPrice < 5500 ? "text-green-600" : "text-gray-800"
                 }`}
               >
                 ₹{maxPrice}
@@ -395,7 +395,7 @@ export default function FacilitiesPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-2">
+              <label className="block text-sm text-gray-800 font-medium mb-2">
                 Minimum Price
               </label>
               <input
@@ -419,7 +419,7 @@ export default function FacilitiesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-2">
+              <label className="block text-sm text-gray-800 font-medium mb-2">
                 Maximum Price
               </label>
               <input
@@ -549,7 +549,7 @@ export default function FacilitiesPage() {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Image placeholder */}
       <div className="h-48 bg-gray-100 flex items-center justify-center border-b">
-        <div className="text-center text-gray-400">
+        <div className="text-center text-gray-600">
           <div className="text-4xl mb-2">🖼️</div>
           <span className="text-sm">Image</span>
         </div>
@@ -562,21 +562,23 @@ export default function FacilitiesPage() {
           <h3 className="font-semibold text-gray-900">{facility.name}</h3>
           <div className="flex items-center">
             <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="ml-1 text-sm text-gray-600">
+            <span className="ml-1 text-sm text-gray-700 font-medium">
               {facility.rating.average} ({facility.rating.count})
             </span>
           </div>
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-gray-600 mb-2">
+        <div className="flex items-center text-gray-700 mb-2">
           <MapPin className="h-4 w-4 mr-1 text-red-500" />
-          <span className="text-sm">{facility.location}</span>
+          <span className="text-sm font-medium">{facility.location}</span>
         </div>
 
         {/* Price */}
-        <div className="flex items-center text-gray-600 mb-3">
-          <span className="text-sm">₹ {facility.price} per hour</span>
+        <div className="flex items-center text-gray-800 mb-3">
+          <span className="text-sm font-semibold">
+            ₹ {facility.price} per hour
+          </span>
         </div>
 
         {/* Sport and type tags */}
@@ -642,11 +644,11 @@ export default function FacilitiesPage() {
         {/* Mobile search */}
         <div className="mt-4 space-y-3">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 h-5 w-5" />
             <input
               type="text"
               placeholder="Search for venues..."
-              className="w-full pl-12 pr-4 py-3 text-gray-700 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-gray-400 transition-colors text-base placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-gray-400 transition-colors text-base placeholder-gray-700"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -669,7 +671,9 @@ export default function FacilitiesPage() {
           venueType.outdoor ||
           ratingFilter) && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-xs text-gray-600">Active filters:</span>
+            <span className="text-xs text-gray-800 font-semibold">
+              Active filters:
+            </span>
             {debouncedSearchTerm && (
               <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                 "{debouncedSearchTerm}"
@@ -700,7 +704,7 @@ export default function FacilitiesPage() {
           </div>
         )}
 
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-700 mt-2 font-medium">
           *clicking this will open a side panel for displaying all the same
           filters as in desktop
         </p>
@@ -732,7 +736,9 @@ export default function FacilitiesPage() {
                 venueType.outdoor ||
                 ratingFilter) && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="text-sm text-gray-600">Active filters:</span>
+                  <span className="text-sm text-gray-800 font-semibold">
+                    Active filters:
+                  </span>
                   {debouncedSearchTerm && (
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                       Search: "{debouncedSearchTerm}"
@@ -817,7 +823,7 @@ export default function FacilitiesPage() {
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="w-10 h-10 flex items-center justify-center text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-600 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+                      className="w-10 h-10 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-800 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
                     >
                       &lt;
                     </button>
@@ -853,7 +859,7 @@ export default function FacilitiesPage() {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="w-10 h-10 flex items-center justify-center text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-600 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+                      className="w-10 h-10 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:text-gray-800 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
                     >
                       &gt;
                     </button>
@@ -861,7 +867,7 @@ export default function FacilitiesPage() {
                 )}
 
                 {/* Results count */}
-                <div className="text-center text-gray-500 mt-4">
+                <div className="text-center text-gray-700 font-medium mt-4">
                   Showing {(currentPage - 1) * 12 + 1} to{" "}
                   {Math.min(currentPage * 12, totalItems)} of {totalItems}{" "}
                   venues
@@ -870,12 +876,12 @@ export default function FacilitiesPage() {
             ) : (
               // No results state
               <div className="text-center py-12">
-                <div className="text-gray-500">
+                <div className="text-gray-800">
                   <div className="text-6xl mb-4">🏟️</div>
-                  <h3 className="text-xl font-semibold mb-2">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900">
                     No Venues Found
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-700 mb-4">
                     Try adjusting your search criteria or filters
                   </p>
                   <button

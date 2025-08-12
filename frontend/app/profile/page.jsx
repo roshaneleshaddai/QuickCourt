@@ -181,7 +181,7 @@ export default function ProfilePage() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
+                    <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600" />
                   )}
                 </div>
                 <button className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-green-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-green-700 transition-colors">
@@ -346,7 +346,7 @@ export default function ProfilePage() {
                       Email Address
                     </label>
                     <div className="flex items-center">
-                      <Mail className="w-5 h-5 text-gray-400 mr-2" />
+                      <Mail className="w-5 h-5 text-gray-600 mr-2" />
                       <p className="text-gray-900">
                         {user?.email || "Not set"}
                       </p>
@@ -371,7 +371,7 @@ export default function ProfilePage() {
                       />
                     ) : (
                       <div className="flex items-center">
-                        <Phone className="w-5 h-5 text-gray-400 mr-2" />
+                        <Phone className="w-5 h-5 text-gray-600 mr-2" />
                         <p className="text-gray-900">
                           {user?.phoneNumber || "Not set"}
                         </p>
