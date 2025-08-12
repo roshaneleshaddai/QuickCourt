@@ -53,13 +53,20 @@ export default function GoogleMap({ coordinates, facilityName, address }) {
     if (window.google && window.google.maps) {
       loadMap()
     } else {
-      // Load Google Maps script
-      const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
-      script.async = true
-      script.onload = loadMap
-      script.onerror = () => setMapError(true)
-      document.head.appendChild(script)
+      // Check if script is already being loaded or exists
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
+      if (existingScript) {
+        // Script is already loading, just wait for it
+        existingScript.onload = loadMap
+      } else {
+        // Load Google Maps script
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+        script.async = true
+        script.onload = loadMap
+        script.onerror = () => setMapError(true)
+        document.head.appendChild(script)
+      }
     }
   }, [mapContainer, coordinates, facilityName])
 

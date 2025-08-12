@@ -42,11 +42,26 @@ router.get(
       const { search, sport, city, rating, page = 1, limit = 10 } = req.query;
       const skip = (page - 1) * limit;
 
+      console.log("Facilities search request:", {
+        search,
+        sport,
+        city,
+        rating,
+        page,
+        limit,
+      });
+
       // Build filter object
       const filter = { isActive: true };
 
       if (search) {
-        filter.$text = { $search: search };
+        // Use regex search instead of text search for more flexibility
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          { "address.city": { $regex: search, $options: "i" } },
+        ];
+        console.log("Applied search filter:", filter.$or);
       }
 
       if (sport) {

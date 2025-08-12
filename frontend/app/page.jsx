@@ -186,6 +186,7 @@ export default function Home() {
         setFacilities([]);
       } finally {
         setLoading(false);
+
       }
     };
 
@@ -218,6 +219,7 @@ export default function Home() {
           <div className="relative">
             <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-green-600 rounded-full animate-ping"></div>
+
           </div>
           <p className="text-gray-600 mt-4 font-medium">
             Loading amazing experiences...
@@ -257,20 +259,13 @@ export default function Home() {
                     <span className="bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent float-animation">
                       NEARBY
                     </span>
-                  </h1>
+        </h1>
                   <p className="text-gray-600 text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                    Seamlessly explore{" "}
-                    <span className="font-semibold text-green-600">
-                      premium sports venues
-                    </span>{" "}
-                    and connect with
-                    <span className="font-semibold text-green-700">
-                      {" "}
-                      passionate athletes
-                    </span>{" "}
-                    just like you!
-                  </p>
-                </div>
+
+                    Seamlessly explore <span className="font-semibold text-green-600">premium sports venues</span> and connect with 
+                    <span className="font-semibold text-green-700"> passionate athletes</span> just like you!
+        </p>
+      </div>
 
                 {/* Mobile Search Form */}
                 <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-6 space-y-4 shadow-lg animate-lift">
@@ -475,6 +470,7 @@ export default function Home() {
                           </div>
                         </div>
 
+
                         {/* Venue Info */}
                         <div className="p-6">
                           <div className="mb-4">
@@ -560,7 +556,7 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-              </div>
+            </div>
             </div>
           </div>
         </div>
@@ -687,7 +683,9 @@ export default function Home() {
                   QuickCourt
                 </span>
               </p>
+
             </div>
+
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-12">
               <div className="animate-lift">
@@ -711,7 +709,7 @@ export default function Home() {
                   4.8★
                 </div>
                 <div className="text-gray-300 text-lg">User Rating</div>
-              </div>
+        </div>
             </div>
 
             {/* Call to Action */}
@@ -726,14 +724,15 @@ export default function Home() {
               </Link>
             </div>
 
+
             <div className="pt-8 border-t border-green-700/30 text-center">
               <p className="text-gray-400 text-lg">
                 &copy; 2025 QuickCourt. Made with
                 <span className="text-green-400 mx-1">💚</span>
                 for sports enthusiasts.
-              </p>
-            </div>
-          </div>
+                      </p>
+                    </div>
+                  </div>
         </div>
       </footer>
     </div>

@@ -123,6 +123,23 @@ const facilitySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    adminNotes: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Admin notes cannot exceed 500 characters"],
+    },
+    approvedAt: {
+      type: Date,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     policies: {
       cancellationPolicy: { type: String, trim: true },
       bookingAdvance: { type: Number, default: 7, min: 0 }, // days in advance

@@ -116,14 +116,20 @@ export default function FacilitiesPage() {
           limit: "12",
         });
 
-        if (debouncedSearchTerm) params.set("search", debouncedSearchTerm);
+        if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+          params.set("search", debouncedSearchTerm.trim());
+        }
         if (selectedSport) params.set("sport", selectedSport);
         if (ratingFilter) params.set("rating", ratingFilter);
+
+        const queryParams = Object.fromEntries(params);
+        console.log("Final query parameters being sent:", queryParams);
+        console.log("Search term being sent:", debouncedSearchTerm);
 
         // Note: Backend doesn't support price or venue type filtering
         // These will be handled client-side
 
-        const response = await facilitiesAPI.getAll(Object.fromEntries(params));
+        const response = await facilitiesAPI.getAll(queryParams);
         console.log("Facilities API response:", response);
 
         if (response.facilities && Array.isArray(response.facilities)) {
@@ -213,10 +219,11 @@ export default function FacilitiesPage() {
     });
 
     const filtered = facilitiesData.filter((facility) => {
-      // Search term filter
+      // Search term filter - only apply if there's a search term
       if (
         debouncedSearchTerm &&
-        !facility.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        debouncedSearchTerm.trim() &&
+        !facility.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase().trim())
       ) {
         console.log(`Filtered out ${facility.name} - search term mismatch`);
         return false;
@@ -287,7 +294,8 @@ export default function FacilitiesPage() {
 
   const handleSearch = () => {
     setCurrentPage(1); // Reset to first page when searching
-    setDebouncedSearchTerm(searchTerm); // Immediately trigger search
+    // Don't set debouncedSearchTerm here - let the useEffect handle it
+    // This ensures the search is properly debounced
   };
 
   const handlePageChange = (page) => {

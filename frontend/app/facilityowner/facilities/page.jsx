@@ -19,6 +19,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function FacilitiesManagement() {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ export default function FacilitiesManagement() {
     },
     sports: [{ sport: null, courts: [] }], // Start with one empty sport
     amenities: [],
+    images: [], // Add images array
     operatingHours: {
       monday: { open: "09:00", close: "22:00", isOpen: true },
       tuesday: { open: "09:00", close: "22:00", isOpen: true },
@@ -75,6 +77,7 @@ export default function FacilitiesManagement() {
     capacity: 2,
     hourlyRate: "",
     amenities: [],
+    images: [], // Add images array for courts
   });
 
   useEffect(() => {
@@ -253,6 +256,7 @@ export default function FacilitiesManagement() {
       },
       sports: [{ sport: null, courts: [] }], // Start with one empty sport
       amenities: [],
+      images: [], // Reset images
       operatingHours: {
         monday: { open: "09:00", close: "22:00", isOpen: true },
         tuesday: { open: "09:00", close: "22:00", isOpen: true },
@@ -279,6 +283,7 @@ export default function FacilitiesManagement() {
       capacity: 2,
       hourlyRate: "",
       amenities: [],
+      images: [], // Reset court images
     });
   };
 
@@ -305,6 +310,7 @@ export default function FacilitiesManagement() {
       },
       sports: facility.sports || [],
       amenities: facility.amenities || [],
+      images: facility.images || [], // Load existing images
       operatingHours: facility.operatingHours || {
         monday: { open: "09:00", close: "22:00", isOpen: true },
         tuesday: { open: "09:00", close: "22:00", isOpen: true },
@@ -712,7 +718,7 @@ export default function FacilitiesManagement() {
                                 hourlyRate: 50,
                                 isActive: true,
                                 amenities: [],
-                                images: []
+                                images: [] // Initialize empty images array
                               }))
                             };
                             setFormData({ ...formData, sports: newSports });
@@ -794,6 +800,23 @@ export default function FacilitiesManagement() {
                     + Add Amenity
                   </button>
                 </div>
+              </div>
+
+              {/* Facility Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facility Images
+                </label>
+                <ImageUpload
+                  images={formData.images}
+                  onImagesChange={(images) => setFormData({ ...formData, images })}
+                  maxImages={10}
+                  maxFileSize={5}
+                  className="mb-4"
+                />
+                <p className="text-xs text-gray-500">
+                  Upload high-quality images of your facility. These will be displayed to potential customers.
+                </p>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button
@@ -1139,6 +1162,23 @@ export default function FacilitiesManagement() {
                   </button>
                 </div>
               </div>
+
+              {/* Facility Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facility Images
+                </label>
+                <ImageUpload
+                  images={formData.images}
+                  onImagesChange={(images) => setFormData({ ...formData, images })}
+                  maxImages={10}
+                  maxFileSize={5}
+                  className="mb-4"
+                />
+                <p className="text-xs text-gray-500">
+                  Upload high-quality images of your facility. These will be displayed to potential customers.
+                </p>
+              </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
@@ -1246,6 +1286,23 @@ export default function FacilitiesManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
                 />
+              </div>
+
+              {/* Court Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Court Images
+                </label>
+                <ImageUpload
+                  images={courtFormData.images}
+                  onImagesChange={(images) => setCourtFormData({ ...courtFormData, images })}
+                  maxImages={5}
+                  maxFileSize={5}
+                  className="mb-4"
+                />
+                <p className="text-xs text-gray-500">
+                  Upload images of this specific court to show its condition and features.
+                </p>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button
